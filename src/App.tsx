@@ -8,6 +8,9 @@ import Index from "./pages/Index";
 import Transactions from "./pages/Transactions";
 import CashControl from "./pages/CashControl";
 import Costs from "./pages/Costs";
+import Inventory from "./pages/Inventory";
+import Suppliers from "./pages/Suppliers";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import React from "react";
 
@@ -25,6 +28,9 @@ const App = () => {
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/cash-control" element={<CashControl />} />
             <Route path="/costs" element={<Costs />} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/suppliers" element={<Suppliers />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

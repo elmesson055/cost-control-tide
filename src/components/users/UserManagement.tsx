@@ -46,9 +46,14 @@ export const UserManagement = () => {
     role: "user",
   });
 
-  const { data: users = [], isLoading } = useQuery({
+  const { data: users = [], isLoading, isError, error } = useQuery({
     queryKey: ["users"],
     queryFn: userService.getUsers,
+    retry: 1, // Limit retries
+    onError: (err) => {
+      console.error("Failed to fetch users:", err);
+      toast.error("Falha ao carregar usuários. Verifique as credenciais do Supabase.");
+    }
   });
 
   const createUserMutation = useMutation({
@@ -121,8 +126,23 @@ export const UserManagement = () => {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Nunca";
-    return format(new Date(dateString), "dd/MM/yyyy HH:mm");
+    try {
+      return format(new Date(dateString), "dd/MM/yyyy HH:mm");
+    } catch (err) {
+      console.error("Error formatting date:", err);
+      return "Data inválida";
+    }
   };
+
+  if (isError) {
+    return (
+      <div className="p-4 border border-red-300 bg-red-50 rounded-md text-red-800">
+        <h3 className="text-lg font-medium">Erro ao carregar usuários</h3>
+        <p className="mt-1">Verifique se suas credenciais do Supabase estão configuradas corretamente.</p>
+        <p className="text-sm mt-2">Detalhes técnicos: {error instanceof Error ? error.message : 'Erro desconhecido'}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

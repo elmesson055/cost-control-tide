@@ -20,6 +20,7 @@ export interface NewUser {
 export const userService = {
   async getUsers(): Promise<User[]> {
     try {
+      console.log("Attempting to fetch users from Supabase");
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -27,18 +28,20 @@ export const userService = {
       
       if (error) {
         console.error('Error fetching users:', error);
-        return [];
+        throw new Error(`Failed to fetch users: ${error.message}`);
       }
       
       return data || [];
     } catch (err) {
       console.error('Exception when fetching users:', err);
-      return [];
+      throw err; // Propagate error to be handled by React Query
     }
   },
   
   async createUser(userData: NewUser): Promise<User | null> {
     try {
+      console.log("Attempting to create user with email:", userData.email);
+      
       // First register the user in auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
@@ -47,7 +50,7 @@ export const userService = {
       
       if (authError) {
         console.error('Error creating user auth:', authError);
-        throw authError;
+        throw new Error(`Auth error: ${authError.message}`);
       }
       
       if (!authData.user?.id) {
@@ -69,18 +72,20 @@ export const userService = {
       
       if (error) {
         console.error('Error creating user record:', error);
-        throw error;
+        throw new Error(`Database error: ${error.message}`);
       }
       
       return data;
     } catch (err) {
       console.error('Exception when creating user:', err);
-      throw err;
+      throw err; // Propagate the error
     }
   },
   
   async deleteUser(userId: string): Promise<void> {
     try {
+      console.log("Attempting to delete user with ID:", userId);
+      
       // Remove from users table
       const { error: userError } = await supabase
         .from('users')
@@ -89,7 +94,7 @@ export const userService = {
       
       if (userError) {
         console.error('Error deleting user record:', userError);
-        throw userError;
+        throw new Error(`Database error: ${userError.message}`);
       }
       
       // For auth deletion, this typically requires admin privileges
@@ -100,16 +105,18 @@ export const userService = {
       
       if (authError) {
         console.error('Error deleting user auth:', authError);
-        throw authError;
+        throw new Error(`Auth deletion error: ${authError.message}`);
       }
     } catch (err) {
       console.error('Exception when deleting user:', err);
-      throw err;
+      throw err; // Propagate the error
     }
   },
   
   async updateUserRole(userId: string, role: string): Promise<User | null> {
     try {
+      console.log("Attempting to update role for user ID:", userId);
+      
       const { data, error } = await supabase
         .from('users')
         .update({ role })
@@ -119,13 +126,13 @@ export const userService = {
       
       if (error) {
         console.error('Error updating user role:', error);
-        throw error;
+        throw new Error(`Database error: ${error.message}`);
       }
       
       return data;
     } catch (err) {
       console.error('Exception when updating user role:', err);
-      throw err;
+      throw err; // Propagate the error
     }
   }
 };

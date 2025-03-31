@@ -50,11 +50,15 @@ export const UserManagement = () => {
     queryKey: ["users"],
     queryFn: userService.getUsers,
     retry: 1, // Limit retries
-    onError: (err) => {
-      console.error("Failed to fetch users:", err);
-      toast.error("Falha ao carregar usuários. Verifique as credenciais do Supabase.");
+    meta: {
+      errorMessage: "Falha ao carregar usuários"
     }
   });
+
+  // Log errors for debugging purposes
+  if (isError) {
+    console.error("Error fetching users:", error);
+  }
 
   const createUserMutation = useMutation({
     mutationFn: userService.createUser,
@@ -65,7 +69,9 @@ export const UserManagement = () => {
       resetNewUser();
     },
     onError: (error) => {
-      toast.error(`Erro ao criar usuário: ${error.message}`);
+      console.error("Error creating user:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error(`Erro ao criar usuário: ${errorMessage}`);
     },
   });
 
@@ -77,7 +83,9 @@ export const UserManagement = () => {
       setIsDeleteDialogOpen(false);
     },
     onError: (error) => {
-      toast.error(`Erro ao remover usuário: ${error.message}`);
+      console.error("Error deleting user:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error(`Erro ao remover usuário: ${errorMessage}`);
     },
   });
 
@@ -90,7 +98,9 @@ export const UserManagement = () => {
       setIsEditDialogOpen(false);
     },
     onError: (error) => {
-      toast.error(`Erro ao atualizar função: ${error.message}`);
+      console.error("Error updating user role:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error(`Erro ao atualizar função: ${errorMessage}`);
     },
   });
 

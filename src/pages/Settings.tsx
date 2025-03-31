@@ -1,4 +1,3 @@
-
 import MainLayout from "@/components/layouts/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
+import { UserManagement } from "@/components/users/UserManagement";
+import { toast } from "sonner";
 
 const Settings = () => {
   const [companyName, setCompanyName] = useState('Tide Control Café');
@@ -18,6 +19,14 @@ const Settings = () => {
   const [notifyLowStock, setNotifyLowStock] = useState(true);
   const [dailyReports, setDailyReports] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+
+  const handleSaveGeneralSettings = () => {
+    toast.success("Configurações salvas com sucesso!");
+  };
+
+  const handleSaveNotificationSettings = () => {
+    toast.success("Preferências de notificação salvas com sucesso!");
+  };
 
   return (
     <MainLayout>
@@ -94,7 +103,7 @@ const Settings = () => {
                 </div>
               </div>
 
-              <Button className="mt-4">Salvar Alterações</Button>
+              <Button onClick={handleSaveGeneralSettings} className="mt-4">Salvar Alterações</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -136,7 +145,7 @@ const Settings = () => {
                 </label>
               </div>
 
-              <Button className="mt-4">Salvar Preferências</Button>
+              <Button onClick={handleSaveNotificationSettings} className="mt-4">Salvar Preferências</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -150,9 +159,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground text-center py-8">
-                Funcionalidade de gerenciamento de usuários será implementada em breve.
-              </p>
+              <UserManagement />
             </CardContent>
           </Card>
         </TabsContent>

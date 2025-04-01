@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from "react";
-import MainLayout from "@/components/layouts/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -156,7 +155,7 @@ const Transactions = () => {
   };
 
   return (
-    <MainLayout>
+    <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Transações</h1>
         
@@ -276,7 +275,7 @@ const Transactions = () => {
           )}
         </CardContent>
       </Card>
-    </MainLayout>
+    </div>
   );
 };
 

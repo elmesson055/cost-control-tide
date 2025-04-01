@@ -1,85 +1,89 @@
 
-import MainLayout from "@/components/layouts/MainLayout";
-import StatCard from "@/components/dashboard/StatCard";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import CashStatusCard from "@/components/dashboard/CashStatusCard";
+import TransactionList from "@/components/dashboard/TransactionList";
 import CashFlowChart from "@/components/dashboard/CashFlowChart";
 import ExpenseBreakdown from "@/components/dashboard/ExpenseBreakdown";
-import TransactionList from "@/components/dashboard/TransactionList";
-import CashStatusCard from "@/components/dashboard/CashStatusCard";
-import { DollarSign, TrendingUp, ShoppingBag, Wallet } from "lucide-react";
-import { 
-  generateCashFlowData, 
-  generateExpenseBreakdownData, 
-  generateTransactions 
-} from "@/utils/mockData";
+import StatCard from "@/components/dashboard/StatCard";
+import { ArrowUpIcon, ArrowDownIcon, BanknoteIcon, PercentIcon } from "lucide-react";
 
 const Index = () => {
-  // Mock data for dashboard
-  const cashFlowData = generateCashFlowData();
-  const expenseBreakdownData = generateExpenseBreakdownData();
-  const recentTransactions = generateTransactions(5);
-
-  // Calculate some metrics for the dashboard
-  const totalIncome = cashFlowData.reduce((sum, day) => sum + day.income, 0);
-  const totalExpenses = cashFlowData.reduce((sum, day) => sum + day.expense, 0);
-  const netProfit = totalIncome - totalExpenses;
-  const profitMargin = (netProfit / totalIncome) * 100;
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
-
   return (
-    <MainLayout>
+    <div>
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
-
-      {/* Stats overview */}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard 
-          title="Receitas (30d)" 
-          value={formatCurrency(totalIncome)}
-          icon={<TrendingUp className="h-5 w-5" />}
-          trend={12.5}
-          trendLabel="vs mês anterior"
+          title="Receitas do Mês"
+          value="R$ 12.450,00"
+          change="+12%"
+          trend="up"
+          icon={<ArrowUpIcon className="h-5 w-5 text-green-600" />}
         />
         <StatCard 
-          title="Despesas (30d)" 
-          value={formatCurrency(totalExpenses)}
-          icon={<ShoppingBag className="h-5 w-5" />}
-          trend={-2.4}
-          trendLabel="vs mês anterior"
+          title="Despesas do Mês"
+          value="R$ 8.230,00"
+          change="+5%"
+          trend="down"
+          icon={<ArrowDownIcon className="h-5 w-5 text-red-600" />}
         />
         <StatCard 
-          title="Lucro Líquido" 
-          value={formatCurrency(netProfit)}
-          icon={<DollarSign className="h-5 w-5" />}
-          trend={8.2}
-          trendLabel="vs mês anterior"
+          title="Lucro Líquido"
+          value="R$ 4.220,00"
+          change="+18%"
+          trend="up"
+          icon={<BanknoteIcon className="h-5 w-5 text-blue-600" />}
         />
-        <CashStatusCard 
-          status="open"
-          balance={1250.75}
-          lastOpened="12/06/2024 08:15:22"
+        <StatCard 
+          title="Margem de Lucro"
+          value="33,9%"
+          change="+2.4%"
+          trend="up"
+          icon={<PercentIcon className="h-5 w-5 text-purple-600" />}
         />
       </div>
-
-      {/* Charts */}
+      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2">
-          <CashFlowChart data={cashFlowData} />
-        </div>
-        <div>
-          <ExpenseBreakdown data={expenseBreakdownData} />
-        </div>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Fluxo de Caixa</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CashFlowChart />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Situação do Caixa</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CashStatusCard />
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Recent Transactions */}
-      <div className="mb-6">
-        <TransactionList transactions={recentTransactions} />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Últimas Transações</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TransactionList />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Distribuição de Despesas</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <ExpenseBreakdown />
+          </CardContent>
+        </Card>
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

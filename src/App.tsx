@@ -13,6 +13,7 @@ import Suppliers from "./pages/Suppliers";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import React from "react";
+import MainLayout from "./components/layouts/MainLayout";
 
 const App = () => {
   const [queryClient] = React.useState(() => new QueryClient());
@@ -24,13 +25,13 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/transactions" element={<Transactions />} />
-            <Route path="/cash-control" element={<CashControl />} />
-            <Route path="/costs" element={<Costs />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/suppliers" element={<Suppliers />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/" element={<MainLayout><Index /></MainLayout>} />
+            <Route path="/transactions" element={<MainLayout><Transactions /></MainLayout>} />
+            <Route path="/cash-control" element={<MainLayout><CashControl /></MainLayout>} />
+            <Route path="/costs" element={<MainLayout><Costs /></MainLayout>} />
+            <Route path="/inventory" element={<MainLayout><Inventory /></MainLayout>} />
+            <Route path="/suppliers" element={<MainLayout><Suppliers /></MainLayout>} />
+            <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

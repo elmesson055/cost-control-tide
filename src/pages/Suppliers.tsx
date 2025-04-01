@@ -94,19 +94,24 @@ const Suppliers = () => {
       }
       
       // Mapear dados do banco para o formato usado no componente
-      const mappedSuppliers = data.map(supplier => ({
-        id: supplier.id,
-        name: supplier.nome,
-        category: supplier.tipo || "Insumos",
-        contact: supplier.contato?.nome || "",
-        phone: supplier.contato?.telefone || "",
-        email: supplier.contato?.email || "",
-        status: "active", // Definir status padrão
-        lastPurchase: "", // Campo a ser preenchido quando tivermos integração com transações
-        rating: 4.0, // Campo a ser calculado no futuro
-        tipo_documento: supplier.tipo_documento,
-        numero_documento: supplier.numero_documento
-      }));
+      const mappedSuppliers = data.map(supplier => {
+        // Definir valores padrão para o contato caso seja nulo
+        const contato = supplier.contato as any || {};
+        
+        return {
+          id: supplier.id,
+          name: supplier.nome,
+          category: supplier.tipo_documento || "Insumos",
+          contact: contato.nome || "",
+          phone: contato.telefone || "",
+          email: contato.email || "",
+          status: "active", // Definir status padrão
+          lastPurchase: "", // Campo a ser preenchido quando tivermos integração com transações
+          rating: 4.0, // Campo a ser calculado no futuro
+          tipo_documento: supplier.tipo_documento,
+          numero_documento: supplier.numero_documento
+        };
+      });
       
       setAllSuppliers(mappedSuppliers);
       setFilteredSuppliers(mappedSuppliers);

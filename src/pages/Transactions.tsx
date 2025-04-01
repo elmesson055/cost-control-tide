@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,17 +32,22 @@ import {
 } from "@/components/ui/dialog";
 import TransactionForm from "@/components/transactions/TransactionForm";
 
-// Tipo para transação
 interface Transaction {
   id: string;
-  data: string; // Data de criação ou vencimento formatada para exibição
-  descricao: string;
-  categoria: string;
-  categoria_id: string;
-  tipo: 'income' | 'expense';
-  valor: number;
-  criado_em?: string;
-  data_vencimento?: string;
+  date: Date;
+  description: string;
+  amount: number;
+  type: string;
+  category: string;
+  categoryId: string;
+  supplier: string;
+  supplierId: string;
+  costCenter: string;
+  costCenterId: string;
+  paymentMethod: string;
+  paymentMethodId: string;
+  dueDate: Date | null;
+  recurring: boolean;
 }
 
 const Transactions = () => {
@@ -54,48 +58,49 @@ const Transactions = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Função para carregar transações do Supabase
   const loadTransactions = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data: transactionsData, error: transactionsError } = await supabase
         .from('transacoes')
-        .select(`
-          id, 
-          descricao, 
-          valor, 
-          tipo, 
-          criado_em, 
-          data_vencimento,
-          categorias(id, nome)
-        `)
-        .order('criado_em', { ascending: false });
-
-      if (error) {
-        throw error;
+        .select('*, categorias(*), fornecedores(*), centros_custo(*), metodos_pagamento(*)');
+      
+      if (transactionsError) {
+        toast({
+          title: "Erro ao carregar transações",
+          description: transactionsError.message,
+          variant: "destructive",
+        });
+        return;
       }
-
-      // Processar e formatar os dados
-      const formattedData: Transaction[] = data.map(item => {
-        // Determinar qual data usar (vencimento ou criação)
-        const displayDate = item.data_vencimento || item.criado_em;
-        const formattedDate = new Date(displayDate).toLocaleDateString('pt-BR');
+      
+      const mappedTransactions = transactionsData.map(transaction => {
+        const categoria = transaction.categorias || {};
+        const fornecedor = transaction.fornecedores || {};
+        const centroCusto = transaction.centros_custo || {};
+        const metodoPagamento = transaction.metodos_pagamento || {};
         
         return {
-          id: item.id,
-          data: formattedDate,
-          descricao: item.descricao || 'Sem descrição',
-          categoria: item.categorias?.nome || 'Sem categoria',
-          categoria_id: item.categorias?.id || '',
-          tipo: item.tipo as 'income' | 'expense',
-          valor: item.valor,
-          criado_em: item.criado_em,
-          data_vencimento: item.data_vencimento,
+          id: transaction.id,
+          date: new Date(transaction.criado_em || Date.now()),
+          description: transaction.descricao || '',
+          amount: Number(transaction.valor) || 0,
+          type: transaction.tipo || '',
+          category: categoria?.nome || 'Não categorizado',
+          categoryId: categoria?.id || null,
+          supplier: fornecedor?.nome || '',
+          supplierId: fornecedor?.id || null,
+          costCenter: centroCusto?.nome || '',
+          costCenterId: centroCusto?.id || null,
+          paymentMethod: metodoPagamento?.nome || '',
+          paymentMethodId: metodoPagamento?.id || null,
+          dueDate: transaction.data_vencimento ? new Date(transaction.data_vencimento) : null,
+          recurring: transaction.recorrente || false
         };
       });
-
-      setTransactions(formattedData);
-      setFilteredTransactions(formattedData);
+      
+      setTransactions(mappedTransactions);
+      setFilteredTransactions(mappedTransactions);
     } catch (error) {
       console.error("Erro ao carregar transações:", error);
       toast.error("Não foi possível carregar as transações.");
@@ -104,7 +109,6 @@ const Transactions = () => {
     }
   };
 
-  // Carregar transações na inicialização do componente
   useEffect(() => {
     loadTransactions();
   }, []);
@@ -112,24 +116,21 @@ const Transactions = () => {
   const filterTransactions = () => {
     let filtered = transactions;
     
-    // Filtrar por tipo
     if (typeFilter !== 'all') {
-      filtered = filtered.filter(t => t.tipo === typeFilter);
+      filtered = filtered.filter(t => t.type === typeFilter);
     }
     
-    // Filtrar por termo de pesquisa
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(t => 
-        t.descricao.toLowerCase().includes(term) || 
-        t.categoria.toLowerCase().includes(term)
+        t.description.toLowerCase().includes(term) || 
+        t.category.toLowerCase().includes(term)
       );
     }
     
     setFilteredTransactions(filtered);
   };
 
-  // Aplicar filtros quando typeFilter ou searchTerm mudam
   useEffect(() => {
     filterTransactions();
   }, [typeFilter, transactions]);
@@ -243,11 +244,11 @@ const Transactions = () => {
               <TableBody>
                 {filteredTransactions.map((transaction) => (
                   <TableRow key={transaction.id}>
-                    <TableCell>{transaction.data}</TableCell>
-                    <TableCell>{transaction.descricao}</TableCell>
-                    <TableCell>{transaction.categoria}</TableCell>
+                    <TableCell>{transaction.date.toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell>{transaction.description}</TableCell>
+                    <TableCell>{transaction.category}</TableCell>
                     <TableCell>
-                      {transaction.tipo === 'income' ? (
+                      {transaction.type === 'income' ? (
                         <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">
                           Receita
                         </Badge>
@@ -258,9 +259,9 @@ const Transactions = () => {
                       )}
                     </TableCell>
                     <TableCell className={`text-right font-medium ${
-                      transaction.tipo === 'income' ? 'text-green-600' : 'text-red-600'
+                      transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {transaction.tipo === 'income' ? '+' : '-'}{formatCurrency(Math.abs(transaction.valor))}
+                      {transaction.type === 'income' ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount))}
                     </TableCell>
                   </TableRow>
                 ))}

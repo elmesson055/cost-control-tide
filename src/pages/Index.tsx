@@ -1,5 +1,6 @@
+
 import MainLayout from "@/components/layouts/MainLayout";
-import StatCard from "@/components/ui/StatCard";
+import StatCard from "@/components/dashboard/StatCard";
 import { ArrowDownUp, DollarSign, Wallet } from "lucide-react";
 
 const Index = () => {
@@ -12,7 +13,7 @@ const Index = () => {
           title="Entradas do Mês"
           value={10000}
           trend={8}
-          trendText="em relação ao mês passado"
+          trendLabel="em relação ao mês passado"
           icon={<ArrowDownUp className="h-5 w-5" />}
         />
         
@@ -20,7 +21,7 @@ const Index = () => {
           title="Saídas do Mês"
           value={7500}
           trend={-3}
-          trendText="em relação ao mês passado"
+          trendLabel="em relação ao mês passado"
           icon={<ArrowDownUp className="h-5 w-5" />}
         />
         
@@ -28,7 +29,7 @@ const Index = () => {
           title="Saldo Operacional"
           value={2500}
           trend={15}
-          trendText="em relação ao mês passado"
+          trendLabel="em relação ao mês passado"
           icon={<Wallet className="h-5 w-5" />}
         />
         
@@ -36,7 +37,7 @@ const Index = () => {
           title="Caixa Atual"
           value={8200}
           trend={5}
-          trendText="em relação ao dia anterior"
+          trendLabel="em relação ao dia anterior"
           icon={<DollarSign className="h-5 w-5" />}
         />
       </div>

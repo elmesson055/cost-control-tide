@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -41,7 +41,6 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 
-// Schema de validação com Zod
 const transactionSchema = z.object({
   descricao: z.string().min(3, "A descrição deve ter pelo menos 3 caracteres"),
   valor: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
@@ -104,11 +103,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
     },
   });
 
-  // Carregar dados do Supabase
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Carregar categorias
         const { data: categoriesData, error: categoriesError } = await supabase
           .from("categorias")
           .select("id, nome, tipo");
@@ -116,7 +113,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
         if (categoriesError) throw categoriesError;
         setCategories(categoriesData || []);
 
-        // Carregar métodos de pagamento
         const { data: paymentMethodsData, error: paymentMethodsError } = await supabase
           .from("metodos_pagamento")
           .select("id, nome")
@@ -125,7 +121,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
         if (paymentMethodsError) throw paymentMethodsError;
         setPaymentMethods(paymentMethodsData || []);
 
-        // Carregar fornecedores
         const { data: suppliersData, error: suppliersError } = await supabase
           .from("fornecedores")
           .select("id, nome");
@@ -133,7 +128,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
         if (suppliersError) throw suppliersError;
         setSuppliers(suppliersData || []);
 
-        // Carregar centros de custo
         const { data: costCentersData, error: costCentersError } = await supabase
           .from("centros_custo")
           .select("id, nome");
@@ -149,7 +143,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
     fetchData();
   }, []);
 
-  // Filtragem de categorias baseada no tipo selecionado
   const filteredCategories = categories.filter(
     (cat) => !cat.tipo || cat.tipo === typeFilter
   );
@@ -158,7 +151,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
     setIsSubmitting(true);
     
     try {
-      // Converter string para número
       const valorNumerico = Number(data.valor);
 
       const transactionData = {
@@ -197,14 +189,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
     if (value === "income" || value === "expense") {
       form.setValue("tipo", value);
       setTypeFilter(value);
-      form.setValue("categoria_id", ""); // Resetar categoria ao mudar o tipo
+      form.setValue("categoria_id", "");
     }
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Tipo de transação */}
         <FormField
           control={form.control}
           name="tipo"
@@ -230,7 +221,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
           )}
         />
 
-        {/* Descrição */}
         <FormField
           control={form.control}
           name="descricao"
@@ -245,7 +235,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
           )}
         />
 
-        {/* Valor */}
         <FormField
           control={form.control}
           name="valor"
@@ -260,7 +249,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
           )}
         />
 
-        {/* Data de vencimento */}
         <FormField
           control={form.control}
           name="data_vencimento"
@@ -300,7 +288,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
           )}
         />
 
-        {/* Categoria */}
         <FormField
           control={form.control}
           name="categoria_id"
@@ -360,7 +347,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
           )}
         />
 
-        {/* Método de pagamento */}
         <FormField
           control={form.control}
           name="metodo_pagamento_id"
@@ -389,7 +375,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
           )}
         />
 
-        {/* Fornecedor */}
         <FormField
           control={form.control}
           name="fornecedor_id"
@@ -449,7 +434,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
           )}
         />
 
-        {/* Centro de custo */}
         <FormField
           control={form.control}
           name="centro_custo_id"
@@ -509,7 +493,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
           )}
         />
 
-        {/* Recorrente */}
         <FormField
           control={form.control}
           name="recorrente"

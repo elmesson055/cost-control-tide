@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CashStatusCard from "@/components/dashboard/CashStatusCard";
 import TransactionList from "@/components/dashboard/TransactionList";
@@ -35,18 +35,23 @@ const mockTransactions = [
   }
 ];
 
-const mockCashFlowData = {
-  months: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
-  income: [12500, 14800, 13200, 15500, 14200, 16800],
-  expense: [8500, 9200, 8800, 9800, 9100, 10200]
-};
+// Properly formatted data for CashFlowChart
+const mockCashFlowData = [
+  { date: "Jan", income: 12500, expense: 8500 },
+  { date: "Fev", income: 14800, expense: 9200 },
+  { date: "Mar", income: 13200, expense: 8800 },
+  { date: "Abr", income: 15500, expense: 9800 },
+  { date: "Mai", income: 14200, expense: 9100 },
+  { date: "Jun", income: 16800, expense: 10200 }
+];
 
+// Properly formatted data for ExpenseBreakdown with color property
 const mockExpenseData = [
-  { name: "Fornecedores", value: 38 },
-  { name: "Aluguel", value: 25 },
-  { name: "Funcionários", value: 20 },
-  { name: "Marketing", value: 10 },
-  { name: "Outros", value: 7 }
+  { name: "Fornecedores", value: 38, color: "#FF6B6B" },
+  { name: "Aluguel", value: 25, color: "#4ECDC4" },
+  { name: "Funcionários", value: 20, color: "#FFD166" },
+  { name: "Marketing", value: 10, color: "#6A0572" },
+  { name: "Outros", value: 7, color: "#1A535C" }
 ];
 
 const Index = () => {
@@ -57,29 +62,29 @@ const Index = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard 
           title="Receitas do Mês"
-          value="R$ 12.450,00"
-          change="+12"
+          value={12450}
+          change={12}
           trend="up"
           icon={<ArrowUpIcon className="h-5 w-5 text-green-600" />}
         />
         <StatCard 
           title="Despesas do Mês"
-          value="R$ 8.230,00"
-          change="+5"
+          value={8230}
+          change={5}
           trend="down"
           icon={<ArrowDownIcon className="h-5 w-5 text-red-600" />}
         />
         <StatCard 
           title="Lucro Líquido"
-          value="R$ 4.220,00"
-          change="+18"
+          value={4220}
+          change={18}
           trend="up"
           icon={<BanknoteIcon className="h-5 w-5 text-blue-600" />}
         />
         <StatCard 
           title="Margem de Lucro"
-          value="33,9%"
-          change="+2.4"
+          value={33.9}
+          change={2.4}
           trend="up"
           icon={<PercentIcon className="h-5 w-5 text-purple-600" />}
         />
@@ -100,7 +105,7 @@ const Index = () => {
             <CardTitle>Situação do Caixa</CardTitle>
           </CardHeader>
           <CardContent>
-            <CashStatusCard status="positive" balance={4220} />
+            <CashStatusCard status="open" balance={4220} />
           </CardContent>
         </Card>
       </div>

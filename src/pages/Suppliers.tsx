@@ -136,10 +136,10 @@ const Suppliers = () => {
   const onSubmit = async (values: SupplierFormValues) => {
     setIsSubmitting(true);
     try {
-      // Preparar objeto para inserção
+      // Preparar objeto para inserção - CORRECTED FIELD NAMES HERE
       const newSupplier = {
         nome: values.nome,
-        tipo: values.categoria,
+        categoria: values.categoria, // This should match the database column name
         tipo_documento: values.tipo_documento,
         numero_documento: values.numero_documento,
         contato: {
@@ -148,6 +148,8 @@ const Suppliers = () => {
           email: values.email
         }
       };
+      
+      console.log("Sending to Supabase:", newSupplier);
       
       // Inserir no Supabase
       const { data, error } = await supabase

@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "react-query";
 
 export interface Transaction {
   id: string;
@@ -21,7 +21,7 @@ export interface Transaction {
   recurring: boolean;
 }
 
-export const useTransactions = () => {
+export function useTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -121,6 +121,74 @@ export const useTransactions = () => {
     }).format(value);
   };
 
+  const { data: categorias = [] } = useQuery({
+    queryKey: ['categorias'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categorias')
+        .select('*')
+        .order('nome');
+
+      if (error) {
+        console.error('Error fetching categorias:', error);
+        throw error;
+      }
+
+      return data || [];
+    }
+  });
+
+  const { data: fornecedores = [] } = useQuery({
+    queryKey: ['fornecedores'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fornecedores')
+        .select('*')
+        .order('nome');
+
+      if (error) {
+        console.error('Error fetching fornecedores:', error);
+        throw error;
+      }
+
+      return data || [];
+    }
+  });
+
+  const { data: centrosCusto = [] } = useQuery({
+    queryKey: ['centros_custo'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('centros_custo')
+        .select('*')
+        .order('nome');
+
+      if (error) {
+        console.error('Error fetching centros de custo:', error);
+        throw error;
+      }
+
+      return data || [];
+    }
+  });
+
+  const { data: metodosPagamento = [] } = useQuery({
+    queryKey: ['metodos_pagamento'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('metodos_pagamento')
+        .select('*')
+        .order('nome');
+
+      if (error) {
+        console.error('Error fetching metodos de pagamento:', error);
+        throw error;
+      }
+
+      return data || [];
+    }
+  });
+
   return {
     transactions,
     filteredTransactions,
@@ -132,5 +200,9 @@ export const useTransactions = () => {
     handleSearch,
     loadTransactions,
     formatCurrency,
+    categorias,
+    fornecedores,
+    centrosCusto,
+    metodosPagamento,
   };
-};
+}

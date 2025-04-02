@@ -45,7 +45,11 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel, suppl
   });
 
   const handleSubmit = async (values: z.infer<typeof inventorySchema>) => {
-    await onSubmit(values);
+    // Make sure nome_item is required as per the NewInventoryItem type
+    await onSubmit({
+      ...values,
+      nome_item: values.nome_item, // Ensure this is passed explicitly
+    });
     form.reset();
   };
 
@@ -77,7 +81,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel, suppl
                 <FormLabel>Unidade de Medida</FormLabel>
                 <Select 
                   onValueChange={field.onChange}
-                  value={field.value || ""}
+                  value={field.value || undefined}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -103,7 +107,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel, suppl
                 <FormLabel>Fornecedor</FormLabel>
                 <Select 
                   onValueChange={field.onChange}
-                  value={field.value || ""}
+                  value={field.value || undefined}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -111,7 +115,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, onCancel, suppl
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem key="none" value="none">Nenhum</SelectItem>
                     {suppliers.map(supplier => (
                       <SelectItem key={supplier.id} value={supplier.id}>
                         {supplier.nome}

@@ -11,6 +11,7 @@ export interface InventoryItem {
   unidade_medida: string | null;
   custo_unitario: number | null;
   fornecedor_id: string | null;
+  fornecedor_nome?: string | null;
 }
 
 export interface NewInventoryItem {
@@ -78,6 +79,11 @@ export function useInventory() {
   // Add new inventory item
   const addInventoryItem = useMutation({
     mutationFn: async (newItem: NewInventoryItem) => {
+      // If fornecedor_id is "none", set it to null
+      if (newItem.fornecedor_id === "none") {
+        newItem.fornecedor_id = null;
+      }
+
       const { data, error } = await supabase
         .from('estoque')
         .insert([newItem])

@@ -1,4 +1,3 @@
-
 import MainLayout from "@/components/layouts/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,11 +11,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, ExternalLink, Phone, Mail, Loader2 } from "lucide-react";
+import { Plus, Search, Phone, Mail, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -30,9 +28,9 @@ const supplierFormSchema = z.object({
   categoria: z.string().min(1, "Categoria é obrigatória"),
   contato_nome: z.string().min(1, "Nome do contato é obrigatório"),
   telefone: z.string().optional(),
-  email: z.string().email("Email inválido").optional(),
-  tipo_documento: z.string().optional(),
-  numero_documento: z.string().optional(),
+  email: z.string().email("Email inválido").optional().nullable(),
+  tipo_documento: z.string().optional().nullable(),
+  numero_documento: z.string().optional().nullable(),
 });
 
 type SupplierFormValues = z.infer<typeof supplierFormSchema>;
@@ -96,12 +94,12 @@ const Suppliers = () => {
       // Mapear dados do banco para o formato usado no componente
       const mappedSuppliers = data.map(supplier => {
         // Definir valores padrão para o contato caso seja nulo
-        const contato = supplier.contato as any || {};
+        const contato = supplier.contato || {};
         
         return {
           id: supplier.id,
           name: supplier.nome,
-          category: supplier.tipo_documento || "Insumos",
+          category: supplier.categoria || "Insumos",
           contact: contato.nome || "",
           phone: contato.telefone || "",
           email: contato.email || "",
@@ -136,16 +134,16 @@ const Suppliers = () => {
   const onSubmit = async (values: SupplierFormValues) => {
     setIsSubmitting(true);
     try {
-      // Preparar objeto para inserção - CORRECTED FIELD NAMES HERE
+      // Preparar objeto para inserção
       const newSupplier = {
         nome: values.nome,
-        categoria: values.categoria, // This should match the database column name
-        tipo_documento: values.tipo_documento,
-        numero_documento: values.numero_documento,
+        categoria: values.categoria,
+        tipo_documento: values.tipo_documento || null,
+        numero_documento: values.numero_documento || null,
         contato: {
           nome: values.contato_nome,
-          telefone: values.telefone,
-          email: values.email
+          telefone: values.telefone || null,
+          email: values.email || null
         }
       };
       
@@ -158,6 +156,7 @@ const Suppliers = () => {
         .select();
       
       if (error) {
+        console.error("Supabase error:", error);
         toast({
           title: "Erro ao cadastrar fornecedor",
           description: error.message,
@@ -176,11 +175,11 @@ const Suppliers = () => {
       form.reset();
       loadSuppliers();
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao cadastrar fornecedor:", error);
       toast({
         title: "Erro inesperado",
-        description: "Não foi possível cadastrar o fornecedor.",
+        description: error.message || "Não foi possível cadastrar o fornecedor.",
         variant: "destructive",
       });
     } finally {
@@ -386,6 +385,9 @@ const Suppliers = () => {
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle>Novo Fornecedor</DialogTitle>
+            <DialogDescription>
+              Adicione um novo fornecedor ao sistema.
+            </DialogDescription>
           </DialogHeader>
           
           <Form {...form}>
@@ -442,7 +444,7 @@ const Suppliers = () => {
                       <FormLabel>Tipo de Documento</FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
-                        defaultValue={field.value}
+                        defaultValue={field.value || undefined}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -466,7 +468,7 @@ const Suppliers = () => {
                     <FormItem>
                       <FormLabel>Número do Documento</FormLabel>
                       <FormControl>
-                        <Input placeholder="Digite o número" {...field} />
+                        <Input placeholder="Digite o número" {...field} value={field.value || ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -499,7 +501,7 @@ const Suppliers = () => {
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input placeholder="email@exemplo.com" {...field} />
+                            <Input placeholder="email@exemplo.com" {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -513,7 +515,7 @@ const Suppliers = () => {
                         <FormItem>
                           <FormLabel>Telefone</FormLabel>
                           <FormControl>
-                            <Input placeholder="(00) 00000-0000" {...field} />
+                            <Input placeholder="(00) 00000-0000" {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

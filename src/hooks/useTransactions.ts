@@ -22,6 +22,45 @@ export interface Transaction {
   recurring: boolean;
 }
 
+interface Categoria {
+  id: string;
+  nome: string;
+  [key: string]: any;
+}
+
+interface Fornecedor {
+  id: string;
+  nome: string;
+  [key: string]: any;
+}
+
+interface CentroCusto {
+  id: string;
+  nome: string;
+  [key: string]: any;
+}
+
+interface MetodoPagamento {
+  id: string;
+  nome: string;
+  [key: string]: any;
+}
+
+interface TransacaoRow {
+  id: string;
+  criado_em?: string;
+  descricao?: string;
+  valor: number;
+  tipo: string;
+  data_vencimento?: string | null;
+  recorrente?: boolean;
+  categorias?: Categoria | null;
+  fornecedores?: Fornecedor | null;
+  centros_custo?: CentroCusto | null;
+  metodos_pagamento?: MetodoPagamento | null;
+  [key: string]: any;
+}
+
 export function useTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
@@ -46,7 +85,7 @@ export function useTransactions() {
         return;
       }
       
-      const mappedTransactions = transactionsData.map(transaction => {
+      const mappedTransactions = transactionsData.map((transaction: TransacaoRow) => {
         const categoria = transaction.categorias || {};
         const fornecedor = transaction.fornecedores || {};
         const centroCusto = transaction.centros_custo || {};
@@ -58,14 +97,14 @@ export function useTransactions() {
           description: transaction.descricao || '',
           amount: Number(transaction.valor) || 0,
           type: transaction.tipo || '',
-          category: categoria?.nome || 'Não categorizado',
-          categoryId: categoria?.id || null,
-          supplier: fornecedor?.nome || '',
-          supplierId: fornecedor?.id || null,
-          costCenter: centroCusto?.nome || '',
-          costCenterId: centroCusto?.id || null,
-          paymentMethod: metodoPagamento?.nome || '',
-          paymentMethodId: metodoPagamento?.id || null,
+          category: categoria.nome || 'Não categorizado',
+          categoryId: categoria.id || null,
+          supplier: fornecedor.nome || '',
+          supplierId: fornecedor.id || null,
+          costCenter: centroCusto.nome || '',
+          costCenterId: centroCusto.id || null,
+          paymentMethod: metodoPagamento.nome || '',
+          paymentMethodId: metodoPagamento.id || null,
           dueDate: transaction.data_vencimento ? new Date(transaction.data_vencimento) : null,
           recurring: transaction.recorrente || false
         };

@@ -10,13 +10,13 @@ export interface Transaction {
   amount: number;
   type: string;
   category: string;
-  categoryId: string;
+  categoryId: string | null;
   supplier: string;
-  supplierId: string;
+  supplierId: string | null;
   costCenter: string;
-  costCenterId: string;
+  costCenterId: string | null;
   paymentMethod: string;
-  paymentMethodId: string;
+  paymentMethodId: string | null;
   dueDate: Date | null;
   recurring: boolean;
 }
@@ -57,14 +57,14 @@ export const useTransactions = () => {
           description: transaction.descricao || '',
           amount: Number(transaction.valor) || 0,
           type: transaction.tipo || '',
-          category: categoria.nome || 'Não categorizado',
-          categoryId: categoria.id || null,
-          supplier: fornecedor.nome || '',
-          supplierId: fornecedor.id || null,
-          costCenter: centroCusto.nome || '',
-          costCenterId: centroCusto.id || null,
-          paymentMethod: metodoPagamento.nome || '',
-          paymentMethodId: metodoPagamento.id || null,
+          category: categoria?.nome || 'Não categorizado',
+          categoryId: categoria?.id || null,
+          supplier: fornecedor?.nome || '',
+          supplierId: fornecedor?.id || null,
+          costCenter: centroCusto?.nome || '',
+          costCenterId: centroCusto?.id || null,
+          paymentMethod: metodoPagamento?.nome || '',
+          paymentMethodId: metodoPagamento?.id || null,
           dueDate: transaction.data_vencimento ? new Date(transaction.data_vencimento) : null,
           recurring: transaction.recorrente || false
         };

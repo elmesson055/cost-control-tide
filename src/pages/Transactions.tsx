@@ -61,6 +61,12 @@ const Transactions = () => {
     loadTransactions();
   };
 
+  // Log para debugging dos dados disponíveis
+  console.log("Categorias disponíveis:", categorias);
+  console.log("Fornecedores disponíveis:", fornecedores);
+  console.log("Centros de Custo disponíveis:", centrosCusto);
+  console.log("Métodos de Pagamento disponíveis:", metodosPagamento);
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -138,10 +144,10 @@ const Transactions = () => {
               
               <TransactionForm 
                 onSubmitSuccess={handleTransactionSuccess} 
-                categorias={categorias}
-                fornecedores={fornecedores}
-                centrosCusto={centrosCusto}
-                metodosPagamento={metodosPagamento}
+                categorias={categorias || []}
+                fornecedores={fornecedores || []}
+                centrosCusto={centrosCusto || []}
+                metodosPagamento={metodosPagamento || []}
               />
               
               <div className="mt-4 flex justify-end">

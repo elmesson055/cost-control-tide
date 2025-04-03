@@ -113,35 +113,55 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     },
   });
 
-  // Update state when props change
+  // Atualizar estado quando as props mudarem
   useEffect(() => {
+    console.log("Propriedades recebidas no TransactionForm:", {
+      categorias: propCategorias,
+      fornecedores: propFornecedores,
+      centrosCusto: propCentrosCusto,
+      metodosPagamento: propMetodosPagamento
+    });
+    
     if (propCategorias && propCategorias.length > 0) setCategories(propCategorias);
     if (propFornecedores && propFornecedores.length > 0) setSuppliers(propFornecedores);
     if (propCentrosCusto && propCentrosCusto.length > 0) setCostCenters(propCentrosCusto);
     if (propMetodosPagamento && propMetodosPagamento.length > 0) setPaymentMethods(propMetodosPagamento);
   }, [propCategorias, propFornecedores, propCentrosCusto, propMetodosPagamento]);
 
-  // Fallback to fetch data if props are empty
+  // Buscar dados se as props estiverem vazias
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Log do estado atual dos dados
+        console.log("Estado atual antes de buscar dados:", {
+          categories: categories.length,
+          suppliers: suppliers.length,
+          costCenters: costCenters.length,
+          paymentMethods: paymentMethods.length
+        });
+        
         if (categories.length === 0) {
           const { data: categoriesData, error: categoriesError } = await supabase
             .from("categorias")
             .select("id, nome, tipo");
             
           if (categoriesError) throw categoriesError;
-          setCategories(categoriesData || []);
+          console.log("Categorias carregadas do Supabase:", categoriesData);
+          if (categoriesData && categoriesData.length > 0) {
+            setCategories(categoriesData);
+          }
         }
 
         if (paymentMethods.length === 0) {
           const { data: paymentMethodsData, error: paymentMethodsError } = await supabase
             .from("metodos_pagamento")
-            .select("id, nome")
-            .eq("ativo", true);
+            .select("id, nome");
             
           if (paymentMethodsError) throw paymentMethodsError;
-          setPaymentMethods(paymentMethodsData || []);
+          console.log("Métodos de pagamento carregados do Supabase:", paymentMethodsData);
+          if (paymentMethodsData && paymentMethodsData.length > 0) {
+            setPaymentMethods(paymentMethodsData);
+          }
         }
 
         if (suppliers.length === 0) {
@@ -150,7 +170,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             .select("id, nome");
             
           if (suppliersError) throw suppliersError;
-          setSuppliers(suppliersData || []);
+          console.log("Fornecedores carregados do Supabase:", suppliersData);
+          if (suppliersData && suppliersData.length > 0) {
+            setSuppliers(suppliersData);
+          }
         }
 
         if (costCenters.length === 0) {
@@ -159,7 +182,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             .select("id, nome");
             
           if (costCentersError) throw costCentersError;
-          setCostCenters(costCentersData || []);
+          console.log("Centros de custo carregados do Supabase:", costCentersData);
+          if (costCentersData && costCentersData.length > 0) {
+            setCostCenters(costCentersData);
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
@@ -168,8 +194,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     };
 
     fetchData();
-  }, [categories.length, paymentMethods.length, suppliers.length, costCenters.length]);
+  }, []);
 
+  // Filtrar categorias com base no tipo selecionado
   const filteredCategories = categories.filter(
     (cat) => !cat.tipo || cat.tipo === typeFilter
   );
@@ -220,11 +247,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     }
   };
 
-  // Debug information
-  console.log("Categories available:", categories);
-  console.log("Suppliers available:", suppliers);
-  console.log("Cost Centers available:", costCenters);
-  console.log("Payment Methods available:", paymentMethods);
+  // Debug das informações disponíveis no componente
+  console.log("Categorias disponíveis no form:", categories);
+  console.log("Fornecedores disponíveis no form:", suppliers);
+  console.log("Centros de Custo disponíveis no form:", costCenters);
+  console.log("Métodos de Pagamento disponíveis no form:", paymentMethods);
+  console.log("Categorias filtradas por tipo:", filteredCategories);
 
   return (
     <Form {...form}>
@@ -346,7 +374,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
+                <PopoverContent className="w-full p-0 bg-popover">
                   <Command>
                     <CommandInput placeholder="Buscar categoria..." />
                     <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
@@ -443,7 +471,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
+                <PopoverContent className="w-full p-0 bg-popover">
                   <Command>
                     <CommandInput placeholder="Buscar fornecedor..." />
                     <CommandEmpty>Nenhum fornecedor encontrado.</CommandEmpty>
@@ -508,7 +536,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
+                <PopoverContent className="w-full p-0 bg-popover">
                   <Command>
                     <CommandInput placeholder="Buscar centro de custo..." />
                     <CommandEmpty>Nenhum centro de custo encontrado.</CommandEmpty>

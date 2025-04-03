@@ -213,7 +213,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   }, []);
 
   // Filtrar categorias com base no tipo selecionado
-  const filteredCategories = (categories || []).filter(
+  const filteredCategories = categories.filter(
     (cat) => !cat?.tipo || cat?.tipo === typeFilter
   );
 
@@ -383,8 +383,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         !field.value && "text-muted-foreground"
                       )}
                     >
-                      {field.value
-                        ? categories.find((cat) => cat?.id === field.value)?.nome || "Selecione uma categoria"
+                      {field.value && filteredCategories.length > 0
+                        ? filteredCategories.find((cat) => cat?.id === field.value)?.nome || "Selecione uma categoria"
                         : "Selecione uma categoria"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -395,7 +395,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     <CommandInput placeholder="Buscar categoria..." />
                     <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
                     <CommandGroup>
-                      {filteredCategories && filteredCategories.length > 0 ? (
+                      {isLoading ? (
+                        <CommandItem disabled>
+                          Carregando categorias...
+                        </CommandItem>
+                      ) : filteredCategories && filteredCategories.length > 0 ? (
                         filteredCategories.map((cat) => (
                           cat && cat.id && cat.nome ? (
                             <CommandItem
@@ -420,7 +424,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         ))
                       ) : (
                         <CommandItem disabled>
-                          {isLoading ? "Carregando categorias..." : "Nenhuma categoria disponível"}
+                          Nenhuma categoria disponível
                         </CommandItem>
                       )}
                     </CommandGroup>
@@ -448,7 +452,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {paymentMethods && paymentMethods.length > 0 ? (
+                  {isLoading ? (
+                    <SelectItem value="loading" disabled>Carregando métodos...</SelectItem>
+                  ) : paymentMethods && paymentMethods.length > 0 ? (
                     paymentMethods.map((method) => (
                       method && method.id && method.nome ? (
                         <SelectItem key={method.id} value={method.id}>
@@ -457,7 +463,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       ) : null
                     ))
                   ) : (
-                    <SelectItem value="none" disabled>{isLoading ? "Carregando métodos..." : "Nenhum método disponível"}</SelectItem>
+                    <SelectItem value="none" disabled>Nenhum método disponível</SelectItem>
                   )}
                 </SelectContent>
               </Select>
@@ -484,7 +490,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         !field.value && "text-muted-foreground"
                       )}
                     >
-                      {field.value
+                      {field.value && suppliers.length > 0
                         ? suppliers.find((sup) => sup?.id === field.value)?.nome || "Selecione um fornecedor"
                         : "Selecione um fornecedor"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -496,7 +502,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     <CommandInput placeholder="Buscar fornecedor..." />
                     <CommandEmpty>Nenhum fornecedor encontrado.</CommandEmpty>
                     <CommandGroup>
-                      {suppliers && suppliers.length > 0 ? (
+                      {isLoading ? (
+                        <CommandItem disabled>
+                          Carregando fornecedores...
+                        </CommandItem>
+                      ) : suppliers && suppliers.length > 0 ? (
                         suppliers.map((sup) => (
                           sup && sup.id && sup.nome ? (
                             <CommandItem
@@ -521,7 +531,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         ))
                       ) : (
                         <CommandItem disabled>
-                          {isLoading ? "Carregando fornecedores..." : "Nenhum fornecedor disponível"}
+                          Nenhum fornecedor disponível
                         </CommandItem>
                       )}
                     </CommandGroup>
@@ -551,7 +561,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         !field.value && "text-muted-foreground"
                       )}
                     >
-                      {field.value
+                      {field.value && costCenters.length > 0
                         ? costCenters.find((cc) => cc?.id === field.value)?.nome || "Selecione um centro de custo"
                         : "Selecione um centro de custo"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -563,7 +573,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     <CommandInput placeholder="Buscar centro de custo..." />
                     <CommandEmpty>Nenhum centro de custo encontrado.</CommandEmpty>
                     <CommandGroup>
-                      {costCenters && costCenters.length > 0 ? (
+                      {isLoading ? (
+                        <CommandItem disabled>
+                          Carregando centros de custo...
+                        </CommandItem>
+                      ) : costCenters && costCenters.length > 0 ? (
                         costCenters.map((cc) => (
                           cc && cc.id && cc.nome ? (
                             <CommandItem
@@ -588,7 +602,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         ))
                       ) : (
                         <CommandItem disabled>
-                          {isLoading ? "Carregando centros de custo..." : "Nenhum centro de custo disponível"}
+                          Nenhum centro de custo disponível
                         </CommandItem>
                       )}
                     </CommandGroup>

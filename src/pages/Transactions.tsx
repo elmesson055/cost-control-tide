@@ -43,6 +43,7 @@ const Transactions = () => {
 
   // Add effect to load transactions when component mounts
   useEffect(() => {
+    console.log("Transactions component mounted, loading transactions...");
     loadTransactions();
   }, []);
 
@@ -71,6 +72,12 @@ const Transactions = () => {
   console.log("Fornecedores disponíveis na página Transactions:", fornecedores);
   console.log("Centros de Custo disponíveis na página Transactions:", centrosCusto);
   console.log("Métodos de Pagamento disponíveis na página Transactions:", metodosPagamento);
+
+  // Verificar se os arrays estão realmente inicializados
+  const categoriasArray = Array.isArray(categorias) ? categorias : [];
+  const fornecedoresArray = Array.isArray(fornecedores) ? fornecedores : [];
+  const centrosCustoArray = Array.isArray(centrosCusto) ? centrosCusto : [];
+  const metodosPagamentoArray = Array.isArray(metodosPagamento) ? metodosPagamento : [];
 
   return (
     <div>
@@ -149,10 +156,10 @@ const Transactions = () => {
               
               <TransactionForm 
                 onSubmitSuccess={handleTransactionSuccess} 
-                categorias={categorias || []}
-                fornecedores={fornecedores || []}
-                centrosCusto={centrosCusto || []}
-                metodosPagamento={metodosPagamento || []}
+                categorias={categoriasArray}
+                fornecedores={fornecedoresArray}
+                centrosCusto={centrosCustoArray}
+                metodosPagamento={metodosPagamentoArray}
               />
               
               <div className="mt-4 flex justify-end">

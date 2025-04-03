@@ -1,11 +1,12 @@
 
-import { supabase } from "../lib/supabase/client";
+import { supabase } from "../integrations/supabase/client";
 
 export interface User {
   id: string;
   email: string;
   full_name: string;
   role: string;
+  empresa_id: string | null;
   created_at: string;
   last_sign_in: string | null;
 }
@@ -15,16 +16,29 @@ export interface NewUser {
   full_name: string;
   role: string;
   password: string;
+  empresa_id?: string | null;
 }
 
 export const userService = {
   async getUsers(): Promise<User[]> {
     try {
       console.log("Attempting to fetch users from Supabase");
-      const { data, error } = await supabase
+      
+      // Obter a empresa atual do localStorage
+      const currentCompanyId = localStorage.getItem('currentCompanyId');
+      
+      // Garantir que estamos filtrando por empresa_id
+      const query = supabase
         .from('users')
         .select('*')
         .order('created_at', { ascending: false });
+        
+      // Se tivermos uma empresa selecionada, filtramos por ela
+      if (currentCompanyId) {
+        query.eq('empresa_id', currentCompanyId);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('Error fetching users:', error);
@@ -41,6 +55,11 @@ export const userService = {
   async createUser(userData: NewUser): Promise<User | null> {
     try {
       console.log("Attempting to create user with email:", userData.email);
+      
+      // Obter a empresa atual do localStorage se não foi fornecido
+      if (!userData.empresa_id) {
+        userData.empresa_id = localStorage.getItem('currentCompanyId');
+      }
       
       // First register the user in auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -66,6 +85,7 @@ export const userService = {
           email: userData.email,
           full_name: userData.full_name,
           role: userData.role,
+          empresa_id: userData.empresa_id,
         })
         .select()
         .single();

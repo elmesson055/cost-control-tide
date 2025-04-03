@@ -1,4 +1,4 @@
-import MainLayout from "@/components/layouts/MainLayout";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
 import { UserManagement } from "@/components/users/UserManagement";
+import { CompanyManagement } from "@/components/companies/CompanyManagement";
 import { toast } from "sonner";
+import { useCompany } from "@/hooks/useCompany";
 
 const Settings = () => {
   const [companyName, setCompanyName] = useState('Tide Control Café');
@@ -19,6 +20,14 @@ const Settings = () => {
   const [notifyLowStock, setNotifyLowStock] = useState(true);
   const [dailyReports, setDailyReports] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const { currentCompany } = useCompany();
+
+  useEffect(() => {
+    if (currentCompany) {
+      setCompanyName(currentCompany.nome || '');
+      setBusinessType(''); // Adicionar este campo na tabela empresa no futuro
+    }
+  }, [currentCompany]);
 
   const handleSaveGeneralSettings = () => {
     toast.success("Configurações salvas com sucesso!");
@@ -29,15 +38,14 @@ const Settings = () => {
   };
 
   return (
-    <MainLayout>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Configurações</h1>
-        <p className="text-muted-foreground mt-1">Gerencie as configurações do sistema</p>
-      </div>
+    <div className="mb-6">
+      <h1 className="text-3xl font-bold">Configurações</h1>
+      <p className="text-muted-foreground mt-1">Gerencie as configurações do sistema</p>
 
-      <Tabs defaultValue="general" className="w-full">
+      <Tabs defaultValue="general" className="w-full mt-6">
         <TabsList className="mb-4">
           <TabsTrigger value="general">Geral</TabsTrigger>
+          <TabsTrigger value="companies">Empresas</TabsTrigger>
           <TabsTrigger value="notifications">Notificações</TabsTrigger>
           <TabsTrigger value="users">Usuários</TabsTrigger>
           <TabsTrigger value="backup">Backup e Restauração</TabsTrigger>
@@ -104,6 +112,20 @@ const Settings = () => {
               </div>
 
               <Button onClick={handleSaveGeneralSettings} className="mt-4">Salvar Alterações</Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="companies">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gerenciamento de Empresas</CardTitle>
+              <CardDescription>
+                Gerencie as empresas no sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CompanyManagement />
             </CardContent>
           </Card>
         </TabsContent>
@@ -194,7 +216,7 @@ const Settings = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </MainLayout>
+    </div>
   );
 };
 

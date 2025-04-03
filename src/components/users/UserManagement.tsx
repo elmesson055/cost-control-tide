@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { User, NewUser, userService } from "@/services/userService";
+import { useCompany } from "@/hooks/useCompany";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { TrashIcon, PencilIcon, UserPlus } from "lucide-react";
@@ -39,20 +40,24 @@ export const UserManagement = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const { currentCompanyId } = useCompany();
+  
   const [newUser, setNewUser] = useState<NewUser>({
     email: "",
     full_name: "",
     password: "",
     role: "user",
+    empresa_id: currentCompanyId || undefined
   });
 
   const { data: users = [], isLoading, isError, error } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["users", currentCompanyId],
     queryFn: userService.getUsers,
     retry: 1, // Limit retries
     meta: {
       errorMessage: "Falha ao carregar usuários"
-    }
+    },
+    enabled: !!currentCompanyId // Só buscar quando tivermos uma empresa selecionada
   });
 
   // Log errors for debugging purposes
@@ -60,10 +65,17 @@ export const UserManagement = () => {
     console.error("Error fetching users:", error);
   }
 
+  // Atualizar empresa_id no newUser quando currentCompanyId mudar
+  React.useEffect(() => {
+    if (currentCompanyId) {
+      setNewUser(prev => ({ ...prev, empresa_id: currentCompanyId }));
+    }
+  }, [currentCompanyId]);
+
   const createUserMutation = useMutation({
     mutationFn: userService.createUser,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["users", currentCompanyId] });
       toast.success("Usuário criado com sucesso!");
       setIsAddDialogOpen(false);
       resetNewUser();
@@ -78,7 +90,7 @@ export const UserManagement = () => {
   const deleteUserMutation = useMutation({
     mutationFn: (userId: string) => userService.deleteUser(userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["users", currentCompanyId] });
       toast.success("Usuário removido com sucesso!");
       setIsDeleteDialogOpen(false);
     },
@@ -93,7 +105,7 @@ export const UserManagement = () => {
     mutationFn: ({ userId, role }: { userId: string; role: string }) => 
       userService.updateUserRole(userId, role),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["users", currentCompanyId] });
       toast.success("Função de usuário atualizada com sucesso!");
       setIsEditDialogOpen(false);
     },
@@ -131,6 +143,7 @@ export const UserManagement = () => {
       full_name: "",
       password: "",
       role: "user",
+      empresa_id: currentCompanyId || undefined
     });
   };
 
@@ -143,6 +156,15 @@ export const UserManagement = () => {
       return "Data inválida";
     }
   };
+
+  if (!currentCompanyId) {
+    return (
+      <div className="p-4 border border-amber-300 bg-amber-50 rounded-md text-amber-800">
+        <h3 className="text-lg font-medium">Selecione uma empresa</h3>
+        <p className="mt-1">Você precisa selecionar uma empresa para gerenciar usuários.</p>
+      </div>
+    );
+  }
 
   if (isError) {
     return (

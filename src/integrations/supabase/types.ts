@@ -59,24 +59,34 @@ export type Database = {
       }
       categorias: {
         Row: {
+          empresa_id: string | null
           id: string
           nome: string
           organizacao_id: string | null
           tipo: string | null
         }
         Insert: {
+          empresa_id?: string | null
           id?: string
           nome: string
           organizacao_id?: string | null
           tipo?: string | null
         }
         Update: {
+          empresa_id?: string | null
           id?: string
           nome?: string
           organizacao_id?: string | null
           tipo?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "categorias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "categorias_organizacao_id_fkey"
             columns: ["organizacao_id"]
@@ -88,6 +98,7 @@ export type Database = {
       }
       centros_custo: {
         Row: {
+          empresa_id: string | null
           gasto_real: number | null
           id: string
           nome: string
@@ -95,6 +106,7 @@ export type Database = {
           organizacao_id: string | null
         }
         Insert: {
+          empresa_id?: string | null
           gasto_real?: number | null
           id?: string
           nome: string
@@ -102,6 +114,7 @@ export type Database = {
           organizacao_id?: string | null
         }
         Update: {
+          empresa_id?: string | null
           gasto_real?: number | null
           id?: string
           nome?: string
@@ -109,6 +122,13 @@ export type Database = {
           organizacao_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "centros_custo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "centros_custo_organizacao_id_fkey"
             columns: ["organizacao_id"]
@@ -118,9 +138,75 @@ export type Database = {
           },
         ]
       }
+      convites_empresa: {
+        Row: {
+          aceito: boolean | null
+          cargo: string | null
+          criado_em: string | null
+          email: string
+          empresa_id: string
+          expira_em: string | null
+          id: string
+          token: string
+        }
+        Insert: {
+          aceito?: boolean | null
+          cargo?: string | null
+          criado_em?: string | null
+          email: string
+          empresa_id: string
+          expira_em?: string | null
+          id?: string
+          token: string
+        }
+        Update: {
+          aceito?: boolean | null
+          cargo?: string | null
+          criado_em?: string | null
+          email?: string
+          empresa_id?: string
+          expira_em?: string | null
+          id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convites_empresa_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      empresas: {
+        Row: {
+          ativo: boolean | null
+          cnpj: string | null
+          criado_em: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          cnpj?: string | null
+          criado_em?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean | null
+          cnpj?: string | null
+          criado_em?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       estoque: {
         Row: {
           custo_unitario: number | null
+          empresa_id: string | null
           estoque_atual: number | null
           estoque_minimo: number | null
           fornecedor_id: string | null
@@ -131,6 +217,7 @@ export type Database = {
         }
         Insert: {
           custo_unitario?: number | null
+          empresa_id?: string | null
           estoque_atual?: number | null
           estoque_minimo?: number | null
           fornecedor_id?: string | null
@@ -141,6 +228,7 @@ export type Database = {
         }
         Update: {
           custo_unitario?: number | null
+          empresa_id?: string | null
           estoque_atual?: number | null
           estoque_minimo?: number | null
           fornecedor_id?: string | null
@@ -150,6 +238,13 @@ export type Database = {
           unidade_medida?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "estoque_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "estoque_fornecedor_id_fkey"
             columns: ["fornecedor_id"]
@@ -169,6 +264,7 @@ export type Database = {
       fornecedores: {
         Row: {
           contato: Json | null
+          empresa_id: string | null
           id: string
           nome: string
           numero_documento: string | null
@@ -177,6 +273,7 @@ export type Database = {
         }
         Insert: {
           contato?: Json | null
+          empresa_id?: string | null
           id?: string
           nome: string
           numero_documento?: string | null
@@ -185,6 +282,7 @@ export type Database = {
         }
         Update: {
           contato?: Json | null
+          empresa_id?: string | null
           id?: string
           nome?: string
           numero_documento?: string | null
@@ -192,6 +290,13 @@ export type Database = {
           tipo_documento?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fornecedores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fornecedores_organizacao_id_fkey"
             columns: ["organizacao_id"]
@@ -204,23 +309,33 @@ export type Database = {
       metodos_pagamento: {
         Row: {
           ativo: boolean | null
+          empresa_id: string | null
           id: string
           nome: string
           organizacao_id: string | null
         }
         Insert: {
           ativo?: boolean | null
+          empresa_id?: string | null
           id?: string
           nome: string
           organizacao_id?: string | null
         }
         Update: {
           ativo?: boolean | null
+          empresa_id?: string | null
           id?: string
           nome?: string
           organizacao_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "metodos_pagamento_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "metodos_pagamento_organizacao_id_fkey"
             columns: ["organizacao_id"]
@@ -262,6 +377,7 @@ export type Database = {
           criado_em: string | null
           data_vencimento: string | null
           descricao: string | null
+          empresa_id: string | null
           fornecedor_id: string | null
           id: string
           metodo_pagamento_id: string | null
@@ -277,6 +393,7 @@ export type Database = {
           criado_em?: string | null
           data_vencimento?: string | null
           descricao?: string | null
+          empresa_id?: string | null
           fornecedor_id?: string | null
           id?: string
           metodo_pagamento_id?: string | null
@@ -292,6 +409,7 @@ export type Database = {
           criado_em?: string | null
           data_vencimento?: string | null
           descricao?: string | null
+          empresa_id?: string | null
           fornecedor_id?: string | null
           id?: string
           metodo_pagamento_id?: string | null
@@ -323,6 +441,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "transacoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "transacoes_fornecedor_id_fkey"
             columns: ["fornecedor_id"]
             isOneToOne: false
@@ -341,6 +466,44 @@ export type Database = {
             columns: ["organizacao_id"]
             isOneToOne: false
             referencedRelation: "organizacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          empresa_id: string | null
+          full_name: string
+          id: string
+          last_sign_in: string | null
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          empresa_id?: string | null
+          full_name: string
+          id: string
+          last_sign_in?: string | null
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          empresa_id?: string | null
+          full_name?: string
+          id?: string
+          last_sign_in?: string | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
         ]

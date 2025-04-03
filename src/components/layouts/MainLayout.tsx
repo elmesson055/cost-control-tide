@@ -1,29 +1,60 @@
 
-import React from 'react';
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import React, { ReactNode } from 'react';
 import AppSidebar from './AppSidebar';
+import { ModeToggle } from '../theme/ModeToggle';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { CompanySelector } from './CompanySelector';
 
 interface MainLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-const MainLayout = ({ children }: MainLayoutProps) => {
+const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
-    <TooltipProvider>
-      <SidebarProvider>
-        <div className="flex h-screen w-full bg-background">
-          <AppSidebar />
-          <div className="flex-1 overflow-auto p-4">
-            <div className="flex items-center mb-4">
-              <SidebarTrigger className="mr-2" />
-              <h1 className="text-lg font-semibold">Tide Control</h1>
-            </div>
-            <main>{children}</main>
+    <div className="flex min-h-screen">
+      <aside className="hidden md:block">
+        <AppSidebar />
+      </aside>
+      
+      <main className="flex-1">
+        <div className="flex justify-between items-center px-6 py-3 border-b">
+          <CompanySelector />
+          
+          <div className="flex items-center gap-4">
+            <ModeToggle />
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Avatar className="h-8 w-8 cursor-pointer">
+                  <AvatarImage src="" />
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Perfil</DropdownMenuItem>
+                <DropdownMenuItem>Configurações</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Sair</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-      </SidebarProvider>
-    </TooltipProvider>
+        
+        <div className="p-6">
+          {children}
+        </div>
+      </main>
+    </div>
   );
 };
 

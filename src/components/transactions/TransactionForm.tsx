@@ -94,14 +94,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   metodosPagamento: propMetodosPagamento = []
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categories, setCategories] = useState<Category[]>(propCategorias);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(propMetodosPagamento);
-  const [suppliers, setSuppliers] = useState<Supplier[]>(propFornecedores);
-  const [costCenters, setCostCenters] = useState<CostCenter[]>(propCentrosCusto);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [typeFilter, setTypeFilter] = useState<string>("expense");
   const [openCategory, setOpenCategory] = useState(false);
   const [openSupplier, setOpenSupplier] = useState(false);
   const [openCostCenter, setOpenCostCenter] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -131,6 +132,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   // Buscar dados se as props estiverem vazias
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         // Log do estado atual dos dados
         console.log("Estado atual antes de buscar dados:", {
@@ -149,6 +151,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           console.log("Categorias carregadas do Supabase:", categoriesData);
           if (categoriesData && categoriesData.length > 0) {
             setCategories(categoriesData);
+          } else {
+            console.log("Nenhuma categoria carregada do Supabase");
+            setCategories([]);
           }
         }
 
@@ -161,6 +166,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           console.log("Métodos de pagamento carregados do Supabase:", paymentMethodsData);
           if (paymentMethodsData && paymentMethodsData.length > 0) {
             setPaymentMethods(paymentMethodsData);
+          } else {
+            console.log("Nenhum método de pagamento carregado do Supabase");
+            setPaymentMethods([]);
           }
         }
 
@@ -173,6 +181,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           console.log("Fornecedores carregados do Supabase:", suppliersData);
           if (suppliersData && suppliersData.length > 0) {
             setSuppliers(suppliersData);
+          } else {
+            console.log("Nenhum fornecedor carregado do Supabase");
+            setSuppliers([]);
           }
         }
 
@@ -185,11 +196,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           console.log("Centros de custo carregados do Supabase:", costCentersData);
           if (costCentersData && costCentersData.length > 0) {
             setCostCenters(costCentersData);
+          } else {
+            console.log("Nenhum centro de custo carregado do Supabase");
+            setCostCenters([]);
           }
         }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
         toast.error("Erro ao carregar dados. Tente novamente.");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -197,8 +213,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   }, []);
 
   // Filtrar categorias com base no tipo selecionado
-  const filteredCategories = categories.filter(
-    (cat) => !cat.tipo || cat.tipo === typeFilter
+  const filteredCategories = (categories || []).filter(
+    (cat) => !cat?.tipo || cat?.tipo === typeFilter
   );
 
   const onSubmit = async (data: TransactionFormValues) => {
@@ -368,7 +384,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       )}
                     >
                       {field.value
-                        ? categories.find((cat) => cat.id === field.value)?.nome || "Selecione uma categoria"
+                        ? categories.find((cat) => cat?.id === field.value)?.nome || "Selecione uma categoria"
                         : "Selecione uma categoria"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -379,30 +395,32 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     <CommandInput placeholder="Buscar categoria..." />
                     <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
                     <CommandGroup>
-                      {filteredCategories.length > 0 ? (
+                      {filteredCategories && filteredCategories.length > 0 ? (
                         filteredCategories.map((cat) => (
-                          <CommandItem
-                            key={cat.id}
-                            value={cat.nome}
-                            onSelect={() => {
-                              form.setValue("categoria_id", cat.id);
-                              setOpenCategory(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                cat.id === field.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {cat.nome}
-                          </CommandItem>
+                          cat && cat.id && cat.nome ? (
+                            <CommandItem
+                              key={cat.id}
+                              value={cat.nome}
+                              onSelect={() => {
+                                form.setValue("categoria_id", cat.id);
+                                setOpenCategory(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  cat.id === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {cat.nome}
+                            </CommandItem>
+                          ) : null
                         ))
                       ) : (
                         <CommandItem disabled>
-                          Nenhuma categoria disponível
+                          {isLoading ? "Carregando categorias..." : "Nenhuma categoria disponível"}
                         </CommandItem>
                       )}
                     </CommandGroup>
@@ -430,14 +448,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {paymentMethods.length > 0 ? (
+                  {paymentMethods && paymentMethods.length > 0 ? (
                     paymentMethods.map((method) => (
-                      <SelectItem key={method.id} value={method.id}>
-                        {method.nome}
-                      </SelectItem>
+                      method && method.id && method.nome ? (
+                        <SelectItem key={method.id} value={method.id}>
+                          {method.nome}
+                        </SelectItem>
+                      ) : null
                     ))
                   ) : (
-                    <SelectItem value="none" disabled>Nenhum método disponível</SelectItem>
+                    <SelectItem value="none" disabled>{isLoading ? "Carregando métodos..." : "Nenhum método disponível"}</SelectItem>
                   )}
                 </SelectContent>
               </Select>
@@ -465,7 +485,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       )}
                     >
                       {field.value
-                        ? suppliers.find((sup) => sup.id === field.value)?.nome || "Selecione um fornecedor"
+                        ? suppliers.find((sup) => sup?.id === field.value)?.nome || "Selecione um fornecedor"
                         : "Selecione um fornecedor"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -476,30 +496,32 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     <CommandInput placeholder="Buscar fornecedor..." />
                     <CommandEmpty>Nenhum fornecedor encontrado.</CommandEmpty>
                     <CommandGroup>
-                      {suppliers.length > 0 ? (
+                      {suppliers && suppliers.length > 0 ? (
                         suppliers.map((sup) => (
-                          <CommandItem
-                            key={sup.id}
-                            value={sup.nome}
-                            onSelect={() => {
-                              form.setValue("fornecedor_id", sup.id);
-                              setOpenSupplier(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                sup.id === field.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {sup.nome}
-                          </CommandItem>
+                          sup && sup.id && sup.nome ? (
+                            <CommandItem
+                              key={sup.id}
+                              value={sup.nome}
+                              onSelect={() => {
+                                form.setValue("fornecedor_id", sup.id);
+                                setOpenSupplier(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  sup.id === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {sup.nome}
+                            </CommandItem>
+                          ) : null
                         ))
                       ) : (
                         <CommandItem disabled>
-                          Nenhum fornecedor disponível
+                          {isLoading ? "Carregando fornecedores..." : "Nenhum fornecedor disponível"}
                         </CommandItem>
                       )}
                     </CommandGroup>
@@ -530,7 +552,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                       )}
                     >
                       {field.value
-                        ? costCenters.find((cc) => cc.id === field.value)?.nome || "Selecione um centro de custo"
+                        ? costCenters.find((cc) => cc?.id === field.value)?.nome || "Selecione um centro de custo"
                         : "Selecione um centro de custo"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -541,30 +563,32 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     <CommandInput placeholder="Buscar centro de custo..." />
                     <CommandEmpty>Nenhum centro de custo encontrado.</CommandEmpty>
                     <CommandGroup>
-                      {costCenters.length > 0 ? (
+                      {costCenters && costCenters.length > 0 ? (
                         costCenters.map((cc) => (
-                          <CommandItem
-                            key={cc.id}
-                            value={cc.nome}
-                            onSelect={() => {
-                              form.setValue("centro_custo_id", cc.id);
-                              setOpenCostCenter(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                cc.id === field.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {cc.nome}
-                          </CommandItem>
+                          cc && cc.id && cc.nome ? (
+                            <CommandItem
+                              key={cc.id}
+                              value={cc.nome}
+                              onSelect={() => {
+                                form.setValue("centro_custo_id", cc.id);
+                                setOpenCostCenter(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  cc.id === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {cc.nome}
+                            </CommandItem>
+                          ) : null
                         ))
                       ) : (
                         <CommandItem disabled>
-                          Nenhum centro de custo disponível
+                          {isLoading ? "Carregando centros de custo..." : "Nenhum centro de custo disponível"}
                         </CommandItem>
                       )}
                     </CommandGroup>

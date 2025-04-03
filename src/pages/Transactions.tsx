@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Tag, CreditCard, Building } from "lucide-react";
 import {
@@ -41,6 +41,11 @@ const Transactions = () => {
     metodosPagamento,
   } = useTransactions();
 
+  // Add effect to load transactions when component mounts
+  useEffect(() => {
+    loadTransactions();
+  }, []);
+
   const handleTransactionSuccess = () => {
     setDialogOpen(false);
     loadTransactions();
@@ -62,10 +67,10 @@ const Transactions = () => {
   };
 
   // Log para debugging dos dados disponíveis
-  console.log("Categorias disponíveis:", categorias);
-  console.log("Fornecedores disponíveis:", fornecedores);
-  console.log("Centros de Custo disponíveis:", centrosCusto);
-  console.log("Métodos de Pagamento disponíveis:", metodosPagamento);
+  console.log("Categorias disponíveis na página Transactions:", categorias);
+  console.log("Fornecedores disponíveis na página Transactions:", fornecedores);
+  console.log("Centros de Custo disponíveis na página Transactions:", centrosCusto);
+  console.log("Métodos de Pagamento disponíveis na página Transactions:", metodosPagamento);
 
   return (
     <div>

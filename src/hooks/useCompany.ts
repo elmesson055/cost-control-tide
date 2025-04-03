@@ -31,25 +31,36 @@ export function useCompany() {
   } = useQuery({
     queryKey: ['companies'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('empresas')
-        .select('*')
-        .order('nome');
-      
-      if (error) {
-        console.error('Error fetching companies:', error);
-        toast.error(`Erro ao carregar empresas: ${error.message}`);
-        throw error;
+      try {
+        console.log('Fetching companies...');
+        const { data, error } = await supabase
+          .from('empresas')
+          .select('*')
+          .order('nome');
+        
+        if (error) {
+          console.error('Error fetching companies:', error);
+          toast.error(`Erro ao carregar empresas: ${error.message}`);
+          throw error;
+        }
+        
+        console.log('Companies loaded:', data);
+        
+        // Se não houver empresa selecionada e houver empresas disponíveis
+        if (!currentCompanyId && data && data.length > 0) {
+          setCurrentCompanyId(data[0].id);
+          localStorage.setItem('currentCompanyId', data[0].id);
+        }
+        
+        return data || [];
+      } catch (err) {
+        console.error('Exception during companies fetch:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar empresas';
+        toast.error(`Erro ao carregar empresas: ${errorMessage}`);
+        return [];
       }
-      
-      // Se não houver empresa selecionada e houver empresas disponíveis
-      if (!currentCompanyId && data && data.length > 0) {
-        setCurrentCompanyId(data[0].id);
-        localStorage.setItem('currentCompanyId', data[0].id);
-      }
-      
-      return data || [];
-    }
+    },
+    retry: 1
   });
   
   // Buscar detalhes da empresa atual
@@ -59,21 +70,27 @@ export function useCompany() {
   } = useQuery({
     queryKey: ['company', currentCompanyId],
     queryFn: async () => {
-      if (!currentCompanyId) return null;
-      
-      const { data, error } = await supabase
-        .from('empresas')
-        .select('*')
-        .eq('id', currentCompanyId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching current company:', error);
-        toast.error(`Erro ao carregar dados da empresa: ${error.message}`);
-        throw error;
+      try {
+        if (!currentCompanyId) return null;
+        
+        console.log('Fetching current company:', currentCompanyId);
+        const { data, error } = await supabase
+          .from('empresas')
+          .select('*')
+          .eq('id', currentCompanyId)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error fetching current company:', error);
+          toast.error(`Erro ao carregar dados da empresa: ${error.message}`);
+          throw error;
+        }
+        
+        return data;
+      } catch (err) {
+        console.error('Exception during company fetch:', err);
+        return null;
       }
-      
-      return data;
     },
     enabled: !!currentCompanyId
   });
@@ -81,17 +98,29 @@ export function useCompany() {
   // Criar nova empresa
   const createCompany = useMutation({
     mutationFn: async (newCompany: NewCompany) => {
-      const { data, error } = await supabase
-        .from('empresas')
-        .insert([newCompany])
-        .select();
-      
-      if (error) {
-        console.error('Error creating company:', error);
-        throw error;
+      try {
+        console.log('Creating company:', newCompany);
+        const { data, error } = await supabase
+          .from('empresas')
+          .insert([newCompany])
+          .select();
+        
+        if (error) {
+          console.error('Error creating company:', error);
+          throw error;
+        }
+        
+        if (!data || data.length === 0) {
+          throw new Error('Nenhum dado retornado ao criar empresa');
+        }
+        
+        console.log('Company created:', data[0]);
+        return data[0];
+      } catch (err) {
+        console.error('Exception during company creation:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+        throw new Error(`Erro ao criar empresa: ${errorMessage}`);
       }
-      
-      return data?.[0];
     },
     onSuccess: (newCompany) => {
       if (newCompany) {
@@ -106,25 +135,37 @@ export function useCompany() {
       }
     },
     onError: (error) => {
-      toast.error(`Erro ao criar empresa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      toast.error(`${error instanceof Error ? error.message : 'Erro ao criar empresa'}`);
     }
   });
   
   // Atualizar empresa
   const updateCompany = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Company> }) => {
-      const { data: updatedData, error } = await supabase
-        .from('empresas')
-        .update(data)
-        .eq('id', id)
-        .select();
-      
-      if (error) {
-        console.error('Error updating company:', error);
-        throw error;
+      try {
+        console.log('Updating company:', id, data);
+        const { data: updatedData, error } = await supabase
+          .from('empresas')
+          .update(data)
+          .eq('id', id)
+          .select();
+        
+        if (error) {
+          console.error('Error updating company:', error);
+          throw error;
+        }
+        
+        if (!updatedData || updatedData.length === 0) {
+          throw new Error('Nenhum dado retornado ao atualizar empresa');
+        }
+        
+        console.log('Company updated:', updatedData[0]);
+        return updatedData[0];
+      } catch (err) {
+        console.error('Exception during company update:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+        throw new Error(`Erro ao atualizar empresa: ${errorMessage}`);
       }
-      
-      return updatedData?.[0];
     },
     onSuccess: (updatedCompany) => {
       if (updatedCompany) {
@@ -134,7 +175,7 @@ export function useCompany() {
       }
     },
     onError: (error) => {
-      toast.error(`Erro ao atualizar empresa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      toast.error(`${error instanceof Error ? error.message : 'Erro ao atualizar empresa'}`);
     }
   });
   

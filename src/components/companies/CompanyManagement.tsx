@@ -43,33 +43,34 @@ export const CompanyManagement = () => {
     cnpj: "",
   });
 
-  const handleAddCompany = (e: React.FormEvent) => {
+  const handleAddCompany = async (e: React.FormEvent) => {
     e.preventDefault();
-    createCompany.mutate(newCompany, {
-      onSuccess: () => {
-        setIsAddDialogOpen(false);
-        resetNewCompany();
-      },
-    });
+    try {
+      await createCompany.mutateAsync(newCompany);
+      setIsAddDialogOpen(false);
+      resetNewCompany();
+    } catch (error) {
+      console.error("Error adding company:", error);
+      // O toast já é exibido pelo hook useCompany
+    }
   };
 
-  const handleUpdateCompany = (e: React.FormEvent) => {
+  const handleUpdateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedCompany) {
-      updateCompany.mutate(
-        {
+      try {
+        await updateCompany.mutateAsync({
           id: selectedCompany.id,
           data: {
             nome: selectedCompany.nome,
             cnpj: selectedCompany.cnpj,
           },
-        },
-        {
-          onSuccess: () => {
-            setIsEditDialogOpen(false);
-          },
-        }
-      );
+        });
+        setIsEditDialogOpen(false);
+      } catch (error) {
+        console.error("Error updating company:", error);
+        // O toast já é exibido pelo hook useCompany
+      }
     }
   };
 

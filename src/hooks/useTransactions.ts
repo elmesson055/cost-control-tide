@@ -86,10 +86,10 @@ export function useTransactions() {
       }
       
       const mappedTransactions = transactionsData.map((transaction: TransacaoRow) => {
-        const categoria = transaction.categorias || {};
-        const fornecedor = transaction.fornecedores || {};
-        const centroCusto = transaction.centros_custo || {};
-        const metodoPagamento = transaction.metodos_pagamento || {};
+        const categoria: Categoria = transaction.categorias || { id: null, nome: 'Não categorizado' };
+        const fornecedor: Fornecedor = transaction.fornecedores || { id: null, nome: '' };
+        const centroCusto: CentroCusto = transaction.centros_custo || { id: null, nome: '' };
+        const metodoPagamento: MetodoPagamento = transaction.metodos_pagamento || { id: null, nome: '' };
         
         return {
           id: transaction.id,

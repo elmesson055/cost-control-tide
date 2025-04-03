@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import AppSidebar from './AppSidebar';
 
 interface MainLayoutProps {
@@ -9,18 +10,20 @@ interface MainLayoutProps {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full bg-background">
-        <AppSidebar />
-        <div className="flex-1 overflow-auto p-4">
-          <div className="flex items-center mb-4">
-            <SidebarTrigger className="mr-2" />
-            <h1 className="text-lg font-semibold">Tide Control</h1>
+    <TooltipProvider>
+      <SidebarProvider>
+        <div className="flex h-screen w-full bg-background">
+          <AppSidebar />
+          <div className="flex-1 overflow-auto p-4">
+            <div className="flex items-center mb-4">
+              <SidebarTrigger className="mr-2" />
+              <h1 className="text-lg font-semibold">Tide Control</h1>
+            </div>
+            <main>{children}</main>
           </div>
-          <main>{children}</main>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 };
 

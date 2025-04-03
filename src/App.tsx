@@ -1,7 +1,6 @@
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
@@ -20,22 +19,20 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<MainLayout><Index /></MainLayout>} />
-            <Route path="/transactions" element={<MainLayout><Transactions /></MainLayout>} />
-            <Route path="/cash-control" element={<MainLayout><CashControl /></MainLayout>} />
-            <Route path="/costs" element={<MainLayout><Costs /></MainLayout>} />
-            <Route path="/inventory" element={<MainLayout><Inventory /></MainLayout>} />
-            <Route path="/suppliers" element={<MainLayout><Suppliers /></MainLayout>} />
-            <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<MainLayout><Index /></MainLayout>} />
+          <Route path="/transactions" element={<MainLayout><Transactions /></MainLayout>} />
+          <Route path="/cash-control" element={<MainLayout><CashControl /></MainLayout>} />
+          <Route path="/costs" element={<MainLayout><Costs /></MainLayout>} />
+          <Route path="/inventory" element={<MainLayout><Inventory /></MainLayout>} />
+          <Route path="/suppliers" element={<MainLayout><Suppliers /></MainLayout>} />
+          <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };

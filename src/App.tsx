@@ -13,26 +13,29 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import React from "react";
 import MainLayout from "./components/layouts/MainLayout";
+import { ThemeProvider } from "./components/theme/ThemeProvider";
 
 const App = () => {
   const [queryClient] = React.useState(() => new QueryClient());
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MainLayout><Index /></MainLayout>} />
-          <Route path="/transactions" element={<MainLayout><Transactions /></MainLayout>} />
-          <Route path="/cash-control" element={<MainLayout><CashControl /></MainLayout>} />
-          <Route path="/costs" element={<MainLayout><Costs /></MainLayout>} />
-          <Route path="/inventory" element={<MainLayout><Inventory /></MainLayout>} />
-          <Route path="/suppliers" element={<MainLayout><Suppliers /></MainLayout>} />
-          <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<MainLayout><Index /></MainLayout>} />
+            <Route path="/transactions" element={<MainLayout><Transactions /></MainLayout>} />
+            <Route path="/cash-control" element={<MainLayout><CashControl /></MainLayout>} />
+            <Route path="/costs" element={<MainLayout><Costs /></MainLayout>} />
+            <Route path="/inventory" element={<MainLayout><Inventory /></MainLayout>} />
+            <Route path="/suppliers" element={<MainLayout><Suppliers /></MainLayout>} />
+            <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };

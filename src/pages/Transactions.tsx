@@ -35,6 +35,10 @@ const Transactions = () => {
     handleSearch,
     loadTransactions,
     formatCurrency,
+    categorias,
+    fornecedores,
+    centrosCusto,
+    metodosPagamento,
   } = useTransactions();
 
   const handleTransactionSuccess = () => {
@@ -132,7 +136,13 @@ const Transactions = () => {
                 </DialogDescription>
               </DialogHeader>
               
-              <TransactionForm onSubmitSuccess={handleTransactionSuccess} />
+              <TransactionForm 
+                onSubmitSuccess={handleTransactionSuccess} 
+                categorias={categorias}
+                fornecedores={fornecedores}
+                centrosCusto={centrosCusto}
+                metodosPagamento={metodosPagamento}
+              />
               
               <div className="mt-4 flex justify-end">
                 <DialogClose asChild>

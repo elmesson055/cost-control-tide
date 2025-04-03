@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,7 +7,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   Form,
@@ -18,8 +19,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -40,6 +39,7 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const transactionSchema = z.object({
   descricao: z.string().min(3, "A descrição deve ter pelo menos 3 caracteres"),
@@ -47,7 +47,7 @@ const transactionSchema = z.object({
     message: "O valor deve ser um número positivo",
   }),
   tipo: z.enum(["income", "expense"]),
-  categoria_id: z.string().uuid("Selecione uma categoria válida"),
+  categoria_id: z.string().uuid("Selecione uma categoria válida").optional(),
   data_vencimento: z.date().optional(),
   metodo_pagamento_id: z.string().uuid("Selecione um método de pagamento válido").optional(),
   fornecedor_id: z.string().uuid("Selecione um fornecedor válido").optional(),
@@ -60,7 +60,7 @@ export type TransactionFormValues = z.infer<typeof transactionSchema>;
 export type Category = {
   id: string;
   nome: string;
-  tipo: string;
+  tipo?: string;
 };
 
 export type PaymentMethod = {
@@ -80,14 +80,24 @@ export type CostCenter = {
 
 interface TransactionFormProps {
   onSubmitSuccess?: () => void;
+  categorias?: Category[];
+  fornecedores?: Supplier[];
+  centrosCusto?: CostCenter[];
+  metodosPagamento?: PaymentMethod[];
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) => {
+const TransactionForm: React.FC<TransactionFormProps> = ({ 
+  onSubmitSuccess,
+  categorias: propCategorias = [],
+  fornecedores: propFornecedores = [],
+  centrosCusto: propCentrosCusto = [],
+  metodosPagamento: propMetodosPagamento = []
+}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
+  const [categories, setCategories] = useState<Category[]>(propCategorias);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(propMetodosPagamento);
+  const [suppliers, setSuppliers] = useState<Supplier[]>(propFornecedores);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>(propCentrosCusto);
   const [typeFilter, setTypeFilter] = useState<string>("expense");
   const [openCategory, setOpenCategory] = useState(false);
   const [openSupplier, setOpenSupplier] = useState(false);
@@ -103,37 +113,54 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
     },
   });
 
+  // Update state when props change
+  useEffect(() => {
+    if (propCategorias && propCategorias.length > 0) setCategories(propCategorias);
+    if (propFornecedores && propFornecedores.length > 0) setSuppliers(propFornecedores);
+    if (propCentrosCusto && propCentrosCusto.length > 0) setCostCenters(propCentrosCusto);
+    if (propMetodosPagamento && propMetodosPagamento.length > 0) setPaymentMethods(propMetodosPagamento);
+  }, [propCategorias, propFornecedores, propCentrosCusto, propMetodosPagamento]);
+
+  // Fallback to fetch data if props are empty
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from("categorias")
-          .select("id, nome, tipo");
-          
-        if (categoriesError) throw categoriesError;
-        setCategories(categoriesData || []);
+        if (categories.length === 0) {
+          const { data: categoriesData, error: categoriesError } = await supabase
+            .from("categorias")
+            .select("id, nome, tipo");
+            
+          if (categoriesError) throw categoriesError;
+          setCategories(categoriesData || []);
+        }
 
-        const { data: paymentMethodsData, error: paymentMethodsError } = await supabase
-          .from("metodos_pagamento")
-          .select("id, nome")
-          .eq("ativo", true);
-          
-        if (paymentMethodsError) throw paymentMethodsError;
-        setPaymentMethods(paymentMethodsData || []);
+        if (paymentMethods.length === 0) {
+          const { data: paymentMethodsData, error: paymentMethodsError } = await supabase
+            .from("metodos_pagamento")
+            .select("id, nome")
+            .eq("ativo", true);
+            
+          if (paymentMethodsError) throw paymentMethodsError;
+          setPaymentMethods(paymentMethodsData || []);
+        }
 
-        const { data: suppliersData, error: suppliersError } = await supabase
-          .from("fornecedores")
-          .select("id, nome");
-          
-        if (suppliersError) throw suppliersError;
-        setSuppliers(suppliersData || []);
+        if (suppliers.length === 0) {
+          const { data: suppliersData, error: suppliersError } = await supabase
+            .from("fornecedores")
+            .select("id, nome");
+            
+          if (suppliersError) throw suppliersError;
+          setSuppliers(suppliersData || []);
+        }
 
-        const { data: costCentersData, error: costCentersError } = await supabase
-          .from("centros_custo")
-          .select("id, nome");
-          
-        if (costCentersError) throw costCentersError;
-        setCostCenters(costCentersData || []);
+        if (costCenters.length === 0) {
+          const { data: costCentersData, error: costCentersError } = await supabase
+            .from("centros_custo")
+            .select("id, nome");
+            
+          if (costCentersError) throw costCentersError;
+          setCostCenters(costCentersData || []);
+        }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
         toast.error("Erro ao carregar dados. Tente novamente.");
@@ -141,7 +168,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
     };
 
     fetchData();
-  }, []);
+  }, [categories.length, paymentMethods.length, suppliers.length, costCenters.length]);
 
   const filteredCategories = categories.filter(
     (cat) => !cat.tipo || cat.tipo === typeFilter
@@ -192,6 +219,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
       form.setValue("categoria_id", "");
     }
   };
+
+  // Debug information
+  console.log("Categories available:", categories);
+  console.log("Suppliers available:", suppliers);
+  console.log("Cost Centers available:", costCenters);
+  console.log("Payment Methods available:", paymentMethods);
 
   return (
     <Form {...form}>
@@ -307,7 +340,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
                       )}
                     >
                       {field.value
-                        ? categories.find((cat) => cat.id === field.value)?.nome
+                        ? categories.find((cat) => cat.id === field.value)?.nome || "Selecione uma categoria"
                         : "Selecione uma categoria"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -318,26 +351,32 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
                     <CommandInput placeholder="Buscar categoria..." />
                     <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
                     <CommandGroup>
-                      {filteredCategories.map((cat) => (
-                        <CommandItem
-                          key={cat.id}
-                          value={cat.nome}
-                          onSelect={() => {
-                            form.setValue("categoria_id", cat.id);
-                            setOpenCategory(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              cat.id === field.value
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                          {cat.nome}
+                      {filteredCategories.length > 0 ? (
+                        filteredCategories.map((cat) => (
+                          <CommandItem
+                            key={cat.id}
+                            value={cat.nome}
+                            onSelect={() => {
+                              form.setValue("categoria_id", cat.id);
+                              setOpenCategory(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                cat.id === field.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            {cat.nome}
+                          </CommandItem>
+                        ))
+                      ) : (
+                        <CommandItem disabled>
+                          Nenhuma categoria disponível
                         </CommandItem>
-                      ))}
+                      )}
                     </CommandGroup>
                   </Command>
                 </PopoverContent>
@@ -363,11 +402,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {paymentMethods.map((method) => (
-                    <SelectItem key={method.id} value={method.id}>
-                      {method.nome}
-                    </SelectItem>
-                  ))}
+                  {paymentMethods.length > 0 ? (
+                    paymentMethods.map((method) => (
+                      <SelectItem key={method.id} value={method.id}>
+                        {method.nome}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>Nenhum método disponível</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -394,7 +437,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
                       )}
                     >
                       {field.value
-                        ? suppliers.find((sup) => sup.id === field.value)?.nome
+                        ? suppliers.find((sup) => sup.id === field.value)?.nome || "Selecione um fornecedor"
                         : "Selecione um fornecedor"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -405,26 +448,32 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
                     <CommandInput placeholder="Buscar fornecedor..." />
                     <CommandEmpty>Nenhum fornecedor encontrado.</CommandEmpty>
                     <CommandGroup>
-                      {suppliers.map((sup) => (
-                        <CommandItem
-                          key={sup.id}
-                          value={sup.nome}
-                          onSelect={() => {
-                            form.setValue("fornecedor_id", sup.id);
-                            setOpenSupplier(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              sup.id === field.value
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                          {sup.nome}
+                      {suppliers.length > 0 ? (
+                        suppliers.map((sup) => (
+                          <CommandItem
+                            key={sup.id}
+                            value={sup.nome}
+                            onSelect={() => {
+                              form.setValue("fornecedor_id", sup.id);
+                              setOpenSupplier(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                sup.id === field.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            {sup.nome}
+                          </CommandItem>
+                        ))
+                      ) : (
+                        <CommandItem disabled>
+                          Nenhum fornecedor disponível
                         </CommandItem>
-                      ))}
+                      )}
                     </CommandGroup>
                   </Command>
                 </PopoverContent>
@@ -453,7 +502,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
                       )}
                     >
                       {field.value
-                        ? costCenters.find((cc) => cc.id === field.value)?.nome
+                        ? costCenters.find((cc) => cc.id === field.value)?.nome || "Selecione um centro de custo"
                         : "Selecione um centro de custo"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -464,26 +513,32 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmitSuccess }) =>
                     <CommandInput placeholder="Buscar centro de custo..." />
                     <CommandEmpty>Nenhum centro de custo encontrado.</CommandEmpty>
                     <CommandGroup>
-                      {costCenters.map((cc) => (
-                        <CommandItem
-                          key={cc.id}
-                          value={cc.nome}
-                          onSelect={() => {
-                            form.setValue("centro_custo_id", cc.id);
-                            setOpenCostCenter(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              cc.id === field.value
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                          {cc.nome}
+                      {costCenters.length > 0 ? (
+                        costCenters.map((cc) => (
+                          <CommandItem
+                            key={cc.id}
+                            value={cc.nome}
+                            onSelect={() => {
+                              form.setValue("centro_custo_id", cc.id);
+                              setOpenCostCenter(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                cc.id === field.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            {cc.nome}
+                          </CommandItem>
+                        ))
+                      ) : (
+                        <CommandItem disabled>
+                          Nenhum centro de custo disponível
                         </CommandItem>
-                      ))}
+                      )}
                     </CommandGroup>
                   </Command>
                 </PopoverContent>

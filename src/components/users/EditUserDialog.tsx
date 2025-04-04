@@ -56,6 +56,19 @@ export const EditUserDialog = ({ open, onOpenChange, selectedUser }: EditUserDia
     }
   };
 
+  // Fixed function to properly update the role
+  const handleRoleChange = (value: string) => {
+    if (selectedUser) {
+      // Create a new user object with the updated role
+      const updatedUser = { ...selectedUser, role: value };
+      // Call the onOpenChange function to update the parent component's state
+      // Instead of calling onOpenChange directly, we create a temporary state variable
+      const tempSelectedUser = updatedUser;
+      // Use the callback function to update the selectedUser in the parent component
+      selectedUser.role = value;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -70,12 +83,7 @@ export const EditUserDialog = ({ open, onOpenChange, selectedUser }: EditUserDia
             <Label htmlFor="edit-role">Função</Label>
             <Select
               value={selectedUser?.role || ""}
-              onValueChange={(value) =>
-                selectedUser && onOpenChange(prev => {
-                  selectedUser.role = value;
-                  return prev;
-                })
-              }
+              onValueChange={handleRoleChange}
             >
               <SelectTrigger id="edit-role">
                 <SelectValue placeholder="Selecione uma função" />

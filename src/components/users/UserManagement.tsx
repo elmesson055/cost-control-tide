@@ -2,17 +2,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { User, userService } from "@/services/userService";
 import { useCompany } from "@/hooks/useCompany";
-import { format } from "date-fns";
 import { UserPlus } from "lucide-react";
 import { UserTable } from "./UserTable";
 import { AddUserDialog } from "./AddUserDialog";

@@ -222,13 +222,18 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     
     try {
       const valorNumerico = Number(data.valor);
+      
+      // Format the date to ISO string if it exists
+      const data_vencimento = data.data_vencimento 
+        ? data.data_vencimento.toISOString() 
+        : null;
 
       const transactionData = {
         descricao: data.descricao,
         valor: valorNumerico,
         tipo: data.tipo,
         categoria_id: data.categoria_id,
-        data_vencimento: data.data_vencimento,
+        data_vencimento, // Now it's a string, not a Date
         metodo_pagamento_id: data.metodo_pagamento_id,
         fornecedor_id: data.fornecedor_id,
         centro_custo_id: data.centro_custo_id,
@@ -237,7 +242,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
       const { error } = await supabase
         .from("transacoes")
-        .insert([transactionData]);
+        .insert(transactionData); // Fixed: pass a single object, not an array
 
       if (error) throw error;
       

@@ -16,6 +16,7 @@ export interface User {
 export interface NewUser {
   email: string;
   full_name: string;
+  password: string; // Added password field
   role: string;
   empresa_id?: string;
 }
@@ -33,16 +34,18 @@ const wrapResult = (data: any | null, error: PostgrestError | Error | null = nul
 };
 
 export const userService = {
-  async getUsers(): Promise<UserServiceResult> {
+  async getUsers(): Promise<User[]> {
     try {
       const { data, error } = await supabase
         .from("users")
         .select("*")
         .order("created_at", { ascending: false });
         
-      return wrapResult(data, error);
+      if (error) throw error;
+      return data || [];
     } catch (error) {
-      return wrapResult(null, error as Error);
+      console.error("Error fetching users:", error);
+      return [];
     }
   },
 
@@ -95,6 +98,11 @@ export const userService = {
       toast.error(`Erro ao atualizar usuário: ${(error as Error).message}`);
       return wrapResult(null, error as Error);
     }
+  },
+
+  // Added this method to specifically update a user's role
+  async updateUserRole(userId: string, role: string): Promise<UserServiceResult> {
+    return this.updateUser(userId, { role });
   },
 
   async deleteUser(id: string): Promise<UserServiceResult> {

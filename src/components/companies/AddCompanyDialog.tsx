@@ -14,6 +14,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Building } from "lucide-react";
 import { useCompany, NewCompany } from "@/hooks/useCompany";
+import { toast } from "sonner";
 
 export const AddCompanyDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,7 +29,8 @@ export const AddCompanyDialog = () => {
     e.preventDefault();
     
     if (!newCompany.nome.trim()) {
-      return; // Don't submit if name is empty
+      toast.error("Nome da empresa é obrigatório");
+      return;
     }
     
     setIsLoading(true);
@@ -37,9 +39,11 @@ export const AddCompanyDialog = () => {
       await createCompany.mutateAsync(newCompany);
       setIsOpen(false);
       resetNewCompany();
+      toast.success("Empresa criada com sucesso!");
     } catch (error) {
       console.error("Error adding company:", error);
-      // Toast is displayed by the hook
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      toast.error(`Erro ao criar empresa: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }

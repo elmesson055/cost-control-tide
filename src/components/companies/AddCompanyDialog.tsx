@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,16 +22,26 @@ export const AddCompanyDialog = () => {
     nome: "",
     cnpj: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleAddCompany = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!newCompany.nome.trim()) {
+      return; // Don't submit if name is empty
+    }
+    
+    setIsLoading(true);
+    
     try {
       await createCompany.mutateAsync(newCompany);
       setIsOpen(false);
       resetNewCompany();
     } catch (error) {
       console.error("Error adding company:", error);
-      // O toast já é exibido pelo hook useCompany
+      // Toast is displayed by the hook
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -44,7 +53,10 @@ export const AddCompanyDialog = () => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      setIsOpen(open);
+      if (!open) resetNewCompany();
+    }}>
       <DialogTrigger asChild>
         <Button className="flex items-center gap-1">
           <Building className="h-4 w-4" />
@@ -85,8 +97,8 @@ export const AddCompanyDialog = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={createCompany.isPending}>
-              {createCompany.isPending ? "Criando..." : "Criar Empresa"}
+            <Button type="submit" disabled={isLoading || createCompany.isPending}>
+              {isLoading || createCompany.isPending ? "Criando..." : "Criar Empresa"}
             </Button>
           </DialogFooter>
         </form>

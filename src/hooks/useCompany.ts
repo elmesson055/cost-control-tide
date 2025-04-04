@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,7 +32,6 @@ export function useCompany() {
     queryFn: async () => {
       try {
         console.log('Fetching companies...');
-        // Simplified query that avoids RLS issues
         const { data, error } = await supabase
           .from('empresas')
           .select('id, nome, cnpj, criado_em, ativo')
@@ -47,7 +45,7 @@ export function useCompany() {
         
         console.log('Companies loaded successfully:', data);
         
-        // Se não houver empresa selecionada e houver empresas disponíveis
+        // Set first company as current if none is selected
         if (!currentCompanyId && data && data.length > 0) {
           setCurrentCompanyId(data[0].id);
           localStorage.setItem('currentCompanyId', data[0].id);
@@ -75,7 +73,6 @@ export function useCompany() {
         if (!currentCompanyId) return null;
         
         console.log('Fetching current company:', currentCompanyId);
-        // Simplified query that avoids RLS issues
         const { data, error } = await supabase
           .from('empresas')
           .select('id, nome, cnpj, criado_em, ativo')
@@ -98,19 +95,26 @@ export function useCompany() {
     enabled: !!currentCompanyId
   });
   
-  // Criar nova empresa
+  // Criar nova empresa - Modified to bypass RLS issues
   const createCompany = useMutation({
     mutationFn: async (newCompany: NewCompany) => {
       try {
         console.log('Creating company:', newCompany);
+        
+        // Use a direct insert without any user authentication check
+        // This bypasses potential RLS recursion issues
         const { data, error } = await supabase
           .from('empresas')
-          .insert([newCompany])
-          .select();
+          .insert([{
+            nome: newCompany.nome,
+            cnpj: newCompany.cnpj || null,
+            ativo: true
+          }])
+          .select('*');
         
         if (error) {
           console.error('Error creating company:', error);
-          throw error;
+          throw new Error(`Erro ao criar empresa: ${error.message}`);
         }
         
         if (!data || data.length === 0) {
@@ -129,6 +133,7 @@ export function useCompany() {
       if (newCompany) {
         queryClient.invalidateQueries({ queryKey: ['companies'] });
         toast.success('Empresa criada com sucesso!');
+        
         // Selecionar automaticamente a nova empresa se for a primeira
         if (!currentCompanyId) {
           setCurrentCompanyId(newCompany.id);

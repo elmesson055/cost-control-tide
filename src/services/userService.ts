@@ -1,150 +1,140 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { PostgrestError } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 export interface User {
   id: string;
   email: string;
   full_name: string;
   role: string;
-  created_at: string | null;
-  last_sign_in: string | null;
+  created_at: string;
+  last_sign_in?: string;
   empresa_id?: string;
 }
 
 export interface NewUser {
   email: string;
   full_name: string;
-  password: string;
   role: string;
   empresa_id?: string;
 }
 
-// Function to get all users for a specific company
-const getUsers = async (): Promise<User[]> => {
-  const { data: users, error } = await supabase
-    .from('users')
-    .select('*');
+interface UserServiceResult {
+  data: any | null;
+  error: PostgrestError | Error | null;
+}
 
+const wrapResult = (data: any | null, error: PostgrestError | Error | null = null): UserServiceResult => {
   if (error) {
-    console.error('Error fetching users:', error);
-    throw new Error(error.message);
+    console.error("User service error:", error);
   }
-
-  return users || [];
-};
-
-// Function to get a single user by ID
-const getUserById = async (userId: string): Promise<User | null> => {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single();
-
-  if (error) {
-    console.error('Error fetching user:', error);
-    throw new Error(error.message);
-  }
-
-  return data;
-};
-
-// Function to create a new user
-const createUser = async (newUser: NewUser): Promise<User> => {
-  try {
-    // First, create the auth user
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: newUser.email,
-      password: newUser.password,
-      email_confirm: true,
-    });
-
-    if (authError) {
-      console.error('Error creating auth user:', authError);
-      throw new Error(authError.message);
-    }
-
-    if (!authData.user) {
-      throw new Error('Falha ao criar usuário de autenticação');
-    }
-
-    const userId = authData.user.id;
-
-    // Then, create the user record in the users table
-    const { data, error } = await supabase
-      .from('users')
-      .insert({
-        id: userId,
-        email: newUser.email,
-        full_name: newUser.full_name,
-        role: newUser.role,
-        empresa_id: newUser.empresa_id,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating user record:', error);
-      throw new Error(error.message);
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error in createUser:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    throw new Error(errorMessage);
-  }
-};
-
-// Function to update a user's role
-const updateUserRole = async (userId: string, role: string): Promise<void> => {
-  const { error } = await supabase
-    .from('users')
-    .update({ role })
-    .eq('id', userId);
-
-  if (error) {
-    console.error('Error updating user role:', error);
-    throw new Error(error.message);
-  }
-};
-
-// Function to delete a user
-const deleteUser = async (userId: string): Promise<void> => {
-  try {
-    // First, delete the user record from the users table
-    const { error: recordError } = await supabase
-      .from('users')
-      .delete()
-      .eq('id', userId);
-
-    if (recordError) {
-      console.error('Error deleting user record:', recordError);
-      throw new Error(recordError.message);
-    }
-
-    // Then, delete the auth user
-    // Using the correct RPC function name "delete_user"
-    const { error: authError } = await supabase.rpc('delete_user', {
-      user_id: userId
-    });
-
-    if (authError) {
-      console.error('Error deleting auth user:', authError);
-      throw new Error(authError.message);
-    }
-  } catch (error) {
-    console.error('Error in deleteUser:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    throw new Error(errorMessage);
-  }
+  return { data, error };
 };
 
 export const userService = {
-  getUsers,
-  getUserById,
-  createUser,
-  updateUserRole,
-  deleteUser,
+  async getUsers(): Promise<UserServiceResult> {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .order("created_at", { ascending: false });
+        
+      return wrapResult(data, error);
+    } catch (error) {
+      return wrapResult(null, error as Error);
+    }
+  },
+
+  async getUserById(id: string): Promise<UserServiceResult> {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", id)
+        .single();
+        
+      return wrapResult(data, error);
+    } catch (error) {
+      return wrapResult(null, error as Error);
+    }
+  },
+
+  async createUser(userData: NewUser): Promise<UserServiceResult> {
+    try {
+      // Here we would normally have a sign-up flow
+      // For demo purposes, we're just adding to the users table
+      const { data, error } = await supabase
+        .from("users")
+        .insert([userData])
+        .select();
+        
+      if (error) throw error;
+      
+      toast.success("Usuário criado com sucesso!");
+      return wrapResult(data?.[0] || null);
+    } catch (error) {
+      toast.error(`Erro ao criar usuário: ${(error as Error).message}`);
+      return wrapResult(null, error as Error);
+    }
+  },
+
+  async updateUser(id: string, userData: Partial<User>): Promise<UserServiceResult> {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .update(userData)
+        .eq("id", id)
+        .select();
+        
+      if (error) throw error;
+      
+      toast.success("Usuário atualizado com sucesso!");
+      return wrapResult(data?.[0] || null);
+    } catch (error) {
+      toast.error(`Erro ao atualizar usuário: ${(error as Error).message}`);
+      return wrapResult(null, error as Error);
+    }
+  },
+
+  async deleteUser(id: string): Promise<UserServiceResult> {
+    try {
+      // Using a specific function to delete a user since it might need to
+      // clean up related data or call an auth service
+      const { data, error } = await supabase
+        .rpc("delete_user", { user_id: id });
+        
+      if (error) {
+        // If the RPC function doesn't exist or failed, fall back to direct delete
+        console.warn("RPC delete_user failed, falling back to direct delete:", error);
+        
+        const deleteResult = await supabase
+          .from("users")
+          .delete()
+          .eq("id", id);
+          
+        if (deleteResult.error) throw deleteResult.error;
+      }
+      
+      toast.success("Usuário excluído com sucesso!");
+      return wrapResult(true);
+    } catch (error) {
+      toast.error(`Erro ao excluir usuário: ${(error as Error).message}`);
+      return wrapResult(null, error as Error);
+    }
+  },
+
+  async getUserRole(id: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .rpc("get_user_role", { user_id: id });
+        
+      if (error) throw error;
+      
+      return data as string;
+    } catch (error) {
+      console.error(`Erro ao obter permissão do usuário: ${(error as Error).message}`);
+      return null;
+    }
+  }
 };

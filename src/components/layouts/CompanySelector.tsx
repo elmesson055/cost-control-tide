@@ -17,8 +17,11 @@ export const CompanySelector = () => {
   useEffect(() => {
     if (currentCompany) {
       setSelectedCompanyName(currentCompany.nome);
+    } else if (companies.length > 0) {
+      // Fallback to first company if current is not set
+      setSelectedCompanyName(companies[0].nome);
     }
-  }, [currentCompany]);
+  }, [currentCompany, companies]);
 
   if (isLoadingCompanies) {
     return (

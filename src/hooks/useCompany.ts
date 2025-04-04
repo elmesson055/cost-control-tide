@@ -33,9 +33,10 @@ export function useCompany() {
     queryFn: async () => {
       try {
         console.log('Fetching companies...');
+        // Simplified query that avoids RLS issues
         const { data, error } = await supabase
           .from('empresas')
-          .select('*')
+          .select('id, nome, cnpj, criado_em, ativo')
           .order('nome');
         
         if (error) {
@@ -44,7 +45,7 @@ export function useCompany() {
           throw error;
         }
         
-        console.log('Companies loaded:', data);
+        console.log('Companies loaded successfully:', data);
         
         // Se não houver empresa selecionada e houver empresas disponíveis
         if (!currentCompanyId && data && data.length > 0) {
@@ -74,9 +75,10 @@ export function useCompany() {
         if (!currentCompanyId) return null;
         
         console.log('Fetching current company:', currentCompanyId);
+        // Simplified query that avoids RLS issues
         const { data, error } = await supabase
           .from('empresas')
-          .select('*')
+          .select('id, nome, cnpj, criado_em, ativo')
           .eq('id', currentCompanyId)
           .maybeSingle();
         
@@ -86,6 +88,7 @@ export function useCompany() {
           throw error;
         }
         
+        console.log('Current company loaded successfully:', data);
         return data;
       } catch (err) {
         console.error('Exception during company fetch:', err);
@@ -114,7 +117,7 @@ export function useCompany() {
           throw new Error('Nenhum dado retornado ao criar empresa');
         }
         
-        console.log('Company created:', data[0]);
+        console.log('Company created successfully:', data[0]);
         return data[0];
       } catch (err) {
         console.error('Exception during company creation:', err);
@@ -159,7 +162,7 @@ export function useCompany() {
           throw new Error('Nenhum dado retornado ao atualizar empresa');
         }
         
-        console.log('Company updated:', updatedData[0]);
+        console.log('Company updated successfully:', updatedData[0]);
         return updatedData[0];
       } catch (err) {
         console.error('Exception during company update:', err);

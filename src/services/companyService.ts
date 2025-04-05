@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Company, NewCompany } from '@/types/company.types';
 import { toast } from 'sonner';
@@ -93,64 +92,36 @@ export const companyService = {
     try {
       console.log('Creating company:', newCompany);
       
-      // Tentativa 1: Inserção direta
-      let createdCompany: Company | null = null;
+      // Utilizando a função segura create_company_secure
+      const { data, error } = await supabase.rpc('create_company_secure', {
+        company_name: newCompany.nome,
+        company_cnpj: newCompany.cnpj || null
+      });
       
-      try {
-        const insertResult = await supabase
-          .from('empresas')
-          .insert([{
-            nome: newCompany.nome,
-            cnpj: newCompany.cnpj || null,
-            ativo: true
-          }])
-          .select();
-        
-        if (insertResult.error) {
-          console.error('Error in direct insert:', insertResult.error);
-          throw insertResult.error;
-        }
-        
-        if (!insertResult.data || insertResult.data.length === 0) {
-          throw new Error('Nenhum dado retornado ao criar empresa');
-        }
-        
-        createdCompany = insertResult.data[0] as Company;
-      } catch (insertError) {
-        console.error('Insert method failed:', insertError);
-        
-        // Tentativa 2: Criar via RPC (alternativa se implementada)
-        try {
-          // @ts-ignore - Ignoramos o erro de tipagem para o RPC que existe no banco mas não está na definição de tipos
-          const rpcResult = await supabase.rpc('create_company', {
-            company_name: newCompany.nome,
-            company_cnpj: newCompany.cnpj || null
-          });
-          
-          if (rpcResult.error) {
-            console.error('Error in RPC method:', rpcResult.error);
-            throw rpcResult.error;
-          }
-          
-          // Garantimos que o resultado é um objeto válido e não um booleano
-          if (typeof rpcResult.data === 'object' && rpcResult.data !== null) {
-            createdCompany = rpcResult.data as Company;
-          } else {
-            console.error('RPC result is not a valid company object:', rpcResult.data);
-            throw new Error('Formato de dados inesperado do RPC');
-          }
-        } catch (rpcError) {
-          console.error('All creation methods failed:', rpcError);
-          throw new Error('Não foi possível criar a empresa. Verifique as permissões no banco de dados.');
-        }
+      if (error) {
+        console.error('Error creating company with secure function:', error);
+        throw error;
       }
       
-      if (!createdCompany) {
-        throw new Error('Falha ao criar empresa: nenhum dado retornado');
+      if (!data) {
+        throw new Error('Nenhum dado retornado ao criar empresa');
       }
       
-      console.log('Company created successfully:', createdCompany);
-      return createdCompany;
+      // Buscamos a empresa recém-criada para obter todos os seus dados
+      const companyId = data;
+      const { data: companyData, error: fetchError } = await supabase
+        .from('empresas')
+        .select('id, nome, cnpj, criado_em, ativo')
+        .eq('id', companyId)
+        .single();
+      
+      if (fetchError) {
+        console.error('Error fetching created company:', fetchError);
+        throw fetchError;
+      }
+      
+      console.log('Company created successfully:', companyData);
+      return companyData as Company;
     } catch (err) {
       console.error('Exception during company creation:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';

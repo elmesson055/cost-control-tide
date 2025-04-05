@@ -551,6 +551,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      create_company_secure: {
+        Args: {
+          company_name: string
+          company_cnpj?: string
+        }
+        Returns: string
+      }
       get_user_role: {
         Args: {
           user_id: string

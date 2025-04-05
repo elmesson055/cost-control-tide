@@ -34,17 +34,35 @@ const wrapResult = (data: any | null, error: PostgrestError | Error | null = nul
 };
 
 export const userService = {
-  async getUsers(): Promise<User[]> {
+  async getUsers(companyId?: string | null): Promise<User[]> {
     try {
-      const { data, error } = await supabase
+      console.log("Fetching users for company:", companyId);
+      
+      if (!companyId) {
+        console.warn("No company ID provided for user fetch");
+        return [];
+      }
+      
+      let query = supabase
         .from("users")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("*");
         
-      if (error) throw error;
+      // Filter by company ID if provided
+      if (companyId) {
+        query = query.eq("empresa_id", companyId);
+      }
+        
+      const { data, error } = await query.order("created_at", { ascending: false });
+        
+      if (error) {
+        console.error("Error fetching users:", error);
+        throw error;
+      }
+      
+      console.log("Users fetched successfully:", data?.length || 0);
       return data || [];
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("Exception during users fetch:", error);
       return [];
     }
   },
@@ -65,6 +83,12 @@ export const userService = {
 
   async createUser(userData: NewUser): Promise<UserServiceResult> {
     try {
+      console.log("Creating user:", userData);
+      
+      if (!userData.empresa_id) {
+        return wrapResult(null, new Error("ID da empresa é obrigatório para criar um usuário"));
+      }
+      
       // Here we would normally have a sign-up flow
       // For demo purposes, we're just adding to the users table
       const { data, error } = await supabase

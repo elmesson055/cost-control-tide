@@ -65,7 +65,13 @@ export function useCompany() {
               throw rpcResult.error;
             }
             
-            companyData = rpcResult.data as Company[];
+            // Garantimos que o resultado é um array
+            if (Array.isArray(rpcResult.data)) {
+              companyData = rpcResult.data as Company[];
+            } else {
+              console.error('RPC result is not an array:', rpcResult.data);
+              throw new Error('Formato de dados inesperado do RPC');
+            }
             console.log('Companies loaded via RPC fallback:', companyData);
           } catch (rpcError) {
             // Se ambos falharem, log e retornar array vazio
@@ -172,7 +178,13 @@ export function useCompany() {
               throw rpcResult.error;
             }
             
-            createdCompany = rpcResult.data as Company;
+            // Garantimos que o resultado é um objeto válido e não um booleano
+            if (typeof rpcResult.data === 'object' && rpcResult.data !== null) {
+              createdCompany = rpcResult.data as Company;
+            } else {
+              console.error('RPC result is not a valid company object:', rpcResult.data);
+              throw new Error('Formato de dados inesperado do RPC');
+            }
           } catch (rpcError) {
             console.error('All creation methods failed:', rpcError);
             throw new Error('Não foi possível criar a empresa. Verifique as permissões no banco de dados.');

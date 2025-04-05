@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { User, userService } from "@/services/userService";
@@ -9,6 +9,7 @@ import { UserTable } from "./UserTable";
 import { AddUserDialog } from "./AddUserDialog";
 import { EditUserDialog } from "./EditUserDialog";
 import { DeleteUserDialog } from "./DeleteUserDialog";
+import { toast } from "sonner";
 
 export const UserManagement = () => {
   const queryClient = useQueryClient();
@@ -16,11 +17,20 @@ export const UserManagement = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const { currentCompanyId } = useCompany();
+  const { currentCompanyId, companies, switchCompany } = useCompany();
+
+  // Automatically select the first company if none is selected
+  useEffect(() => {
+    if (!currentCompanyId && companies && companies.length > 0) {
+      console.log("Auto-selecting first company:", companies[0].id);
+      switchCompany(companies[0].id);
+      toast.success(`Empresa "${companies[0].nome}" selecionada automaticamente`);
+    }
+  }, [currentCompanyId, companies, switchCompany]);
 
   const { data: users = [], isLoading, isError, error } = useQuery({
     queryKey: ["users", currentCompanyId],
-    queryFn: userService.getUsers,
+    queryFn: () => userService.getUsers(currentCompanyId),
     retry: 1, // Limit retries
     meta: {
       errorMessage: "Falha ao carregar usuários"
@@ -38,6 +48,23 @@ export const UserManagement = () => {
       <div className="p-4 border border-amber-300 bg-amber-50 rounded-md text-amber-800">
         <h3 className="text-lg font-medium">Selecione uma empresa</h3>
         <p className="mt-1">Você precisa selecionar uma empresa para gerenciar usuários.</p>
+        {companies && companies.length > 0 && (
+          <div className="mt-4">
+            <p className="mb-2">Empresas disponíveis:</p>
+            <div className="flex flex-wrap gap-2">
+              {companies.map(company => (
+                <Button 
+                  key={company.id} 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => switchCompany(company.id)}
+                >
+                  {company.nome}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }

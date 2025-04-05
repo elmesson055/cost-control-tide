@@ -34,16 +34,27 @@ export function useCompany() {
       try {
         console.log('Fetching companies...');
         
-        // Usando um método alternativo para contornar problemas com RLS
-        // Fazendo uma chamada direta com service_role (simulando)
-        const { data, error } = await supabase
-          .rpc('get_all_companies')
-          .select();
+        // Primeiro, tentar buscar via RPC
+        let companyData: Company[] = [];
         
-        if (error) {
-          console.error('Error fetching companies via RPC:', error);
+        try {
+          // Usando um método alternativo para contornar problemas com RLS
+          const { data, error } = await supabase
+            .from('empresas')
+            .select('id, nome, cnpj, criado_em, ativo')
+            .order('nome');
           
-          // Fallback: tentar método direto se o RPC falhar
+          if (error) {
+            console.error('Error fetching companies:', error);
+            toast.error(`Erro ao carregar empresas: ${error.message}`);
+            throw error;
+          }
+          
+          companyData = data as Company[];
+        } catch (rpcError) {
+          console.error('Error in primary query method:', rpcError);
+          
+          // Fallback: tentar método direto se o primeiro falhar
           const directResult = await supabase
             .from('empresas')
             .select('id, nome, cnpj, criado_em, ativo')
@@ -55,23 +66,23 @@ export function useCompany() {
             throw directResult.error;
           }
           
-          data = directResult.data;
+          companyData = directResult.data as Company[];
         }
         
-        console.log('Companies loaded successfully:', data);
+        console.log('Companies loaded successfully:', companyData);
         
         // Set first company as current if none is selected
-        if (!currentCompanyId && data && data.length > 0) {
-          setCurrentCompanyId(data[0].id);
-          localStorage.setItem('currentCompanyId', data[0].id);
+        if (!currentCompanyId && companyData.length > 0) {
+          setCurrentCompanyId(companyData[0].id);
+          localStorage.setItem('currentCompanyId', companyData[0].id);
         }
         
-        return data || [];
+        return companyData;
       } catch (err) {
         console.error('Exception during companies fetch:', err);
         const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar empresas';
         toast.error(`Erro ao carregar empresas: ${errorMessage}`);
-        return [];
+        return [] as Company[];
       }
     },
     retry: 1
@@ -101,7 +112,7 @@ export function useCompany() {
         }
         
         console.log('Current company loaded successfully:', data);
-        return data;
+        return data as Company | null;
       } catch (err) {
         console.error('Exception during company fetch:', err);
         return null;
@@ -124,23 +135,11 @@ export function useCompany() {
             cnpj: newCompany.cnpj || null,
             ativo: true
           }])
-          .select('*');
+          .select();
         
         if (error) {
           console.error('Error in direct insert:', error);
-          
-          // Método 2: Tentar via RPC (se disponível)
-          const rpcResult = await supabase.rpc('create_company', {
-            company_name: newCompany.nome,
-            company_cnpj: newCompany.cnpj || null
-          });
-          
-          if (rpcResult.error) {
-            console.error('Error in RPC method:', rpcResult.error);
-            throw new Error(`Erro ao criar empresa: ${error.message}`);
-          }
-          
-          return rpcResult.data;
+          throw new Error(`Erro ao criar empresa: ${error.message}`);
         }
         
         if (!data || data.length === 0) {
@@ -148,24 +147,22 @@ export function useCompany() {
         }
         
         console.log('Company created successfully:', data[0]);
-        return data[0];
+        return data[0] as Company;
       } catch (err) {
         console.error('Exception during company creation:', err);
         const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
         throw new Error(`Erro ao criar empresa: ${errorMessage}`);
       }
     },
-    onSuccess: (newCompany) => {
-      if (newCompany) {
-        queryClient.invalidateQueries({ queryKey: ['companies'] });
-        toast.success('Empresa criada com sucesso!');
-        
-        // Selecionar automaticamente a nova empresa se for a primeira
-        if (!currentCompanyId) {
-          setCurrentCompanyId(newCompany.id);
-          localStorage.setItem('currentCompanyId', newCompany.id);
-          queryClient.invalidateQueries({ queryKey: ['company', newCompany.id] });
-        }
+    onSuccess: (newCompany: Company) => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      toast.success('Empresa criada com sucesso!');
+      
+      // Selecionar automaticamente a nova empresa se for a primeira
+      if (!currentCompanyId) {
+        setCurrentCompanyId(newCompany.id);
+        localStorage.setItem('currentCompanyId', newCompany.id);
+        queryClient.invalidateQueries({ queryKey: ['company', newCompany.id] });
       }
     },
     onError: (error) => {
@@ -194,19 +191,17 @@ export function useCompany() {
         }
         
         console.log('Company updated successfully:', updatedData[0]);
-        return updatedData[0];
+        return updatedData[0] as Company;
       } catch (err) {
         console.error('Exception during company update:', err);
         const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
         throw new Error(`Erro ao atualizar empresa: ${errorMessage}`);
       }
     },
-    onSuccess: (updatedCompany) => {
-      if (updatedCompany) {
-        queryClient.invalidateQueries({ queryKey: ['companies'] });
-        queryClient.invalidateQueries({ queryKey: ['company', updatedCompany.id] });
-        toast.success('Empresa atualizada com sucesso!');
-      }
+    onSuccess: (updatedCompany: Company) => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      queryClient.invalidateQueries({ queryKey: ['company', updatedCompany.id] });
+      toast.success('Empresa atualizada com sucesso!');
     },
     onError: (error) => {
       toast.error(`${error instanceof Error ? error.message : 'Erro ao atualizar empresa'}`);

@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { Check, PencilIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Company } from "@/hooks/useCompany";
+import { Company } from "@/types/company.types";
 
 interface CompanyTableProps {
   companies: Company[];

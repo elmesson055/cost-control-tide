@@ -34,39 +34,43 @@ export function useCompany() {
       try {
         console.log('Fetching companies...');
         
-        // Primeiro, tentar buscar via RPC
+        // Tentativa direta primeiro (pode falhar devido ao RLS)
         let companyData: Company[] = [];
         
         try {
-          // Usando um método alternativo para contornar problemas com RLS
-          const { data, error } = await supabase
-            .from('empresas')
-            .select('id, nome, cnpj, criado_em, ativo')
-            .order('nome');
-          
-          if (error) {
-            console.error('Error fetching companies:', error);
-            toast.error(`Erro ao carregar empresas: ${error.message}`);
-            throw error;
-          }
-          
-          companyData = data as Company[];
-        } catch (rpcError) {
-          console.error('Error in primary query method:', rpcError);
-          
-          // Fallback: tentar método direto se o primeiro falhar
+          // Usando um método direto para buscar empresas
           const directResult = await supabase
             .from('empresas')
             .select('id, nome, cnpj, criado_em, ativo')
             .order('nome');
           
           if (directResult.error) {
-            console.error('Error in fallback direct query:', directResult.error);
-            toast.error(`Erro ao carregar empresas: ${directResult.error.message}`);
+            console.error('Error in direct query:', directResult.error);
             throw directResult.error;
           }
           
           companyData = directResult.data as Company[];
+          console.log('Companies loaded via direct query:', companyData);
+        } catch (queryError) {
+          console.error('Error in primary query method:', queryError);
+          
+          // Tentativa com RPC como fallback (se implementado no backend)
+          try {
+            const rpcResult = await supabase.rpc('get_all_companies');
+            
+            if (rpcResult.error) {
+              console.error('Error in RPC fallback:', rpcResult.error);
+              throw rpcResult.error;
+            }
+            
+            companyData = rpcResult.data as Company[];
+            console.log('Companies loaded via RPC fallback:', companyData);
+          } catch (rpcError) {
+            // Se ambos falharem, log e retornar array vazio
+            console.error('All company fetch methods failed:', rpcError);
+            toast.error('Não foi possível carregar as empresas. Verifique as políticas de acesso no Supabase.');
+            return [];
+          }
         }
         
         console.log('Companies loaded successfully:', companyData);
@@ -127,27 +131,57 @@ export function useCompany() {
       try {
         console.log('Creating company:', newCompany);
         
-        // Método 1: Inserção direta (anon key, sem autenticação explícita)
-        const { data, error } = await supabase
-          .from('empresas')
-          .insert([{
-            nome: newCompany.nome,
-            cnpj: newCompany.cnpj || null,
-            ativo: true
-          }])
-          .select();
+        // Tentativa 1: Inserção direta
+        let createdCompany: Company | null = null;
         
-        if (error) {
-          console.error('Error in direct insert:', error);
-          throw new Error(`Erro ao criar empresa: ${error.message}`);
+        try {
+          const insertResult = await supabase
+            .from('empresas')
+            .insert([{
+              nome: newCompany.nome,
+              cnpj: newCompany.cnpj || null,
+              ativo: true
+            }])
+            .select();
+          
+          if (insertResult.error) {
+            console.error('Error in direct insert:', insertResult.error);
+            throw insertResult.error;
+          }
+          
+          if (!insertResult.data || insertResult.data.length === 0) {
+            throw new Error('Nenhum dado retornado ao criar empresa');
+          }
+          
+          createdCompany = insertResult.data[0] as Company;
+        } catch (insertError) {
+          console.error('Insert method failed:', insertError);
+          
+          // Tentativa 2: Criar via RPC (alternativa se implementada)
+          try {
+            const rpcResult = await supabase.rpc('create_company', {
+              company_name: newCompany.nome,
+              company_cnpj: newCompany.cnpj || null
+            });
+            
+            if (rpcResult.error) {
+              console.error('Error in RPC method:', rpcResult.error);
+              throw rpcResult.error;
+            }
+            
+            createdCompany = rpcResult.data as Company;
+          } catch (rpcError) {
+            console.error('All creation methods failed:', rpcError);
+            throw new Error('Não foi possível criar a empresa. Verifique as permissões no banco de dados.');
+          }
         }
         
-        if (!data || data.length === 0) {
-          throw new Error('Nenhum dado retornado ao criar empresa');
+        if (!createdCompany) {
+          throw new Error('Falha ao criar empresa: nenhum dado retornado');
         }
         
-        console.log('Company created successfully:', data[0]);
-        return data[0] as Company;
+        console.log('Company created successfully:', createdCompany);
+        return createdCompany;
       } catch (err) {
         console.error('Exception during company creation:', err);
         const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';

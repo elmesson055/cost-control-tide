@@ -56,6 +56,8 @@ export function useCompany() {
           
           // Tentativa com RPC como fallback (se implementado no backend)
           try {
+            // Como o RPC não está definido no TypeScript, usamos uma abordagem alternativa
+            // @ts-ignore - Ignoramos o erro de tipagem para o RPC que existe no banco mas não está na definição de tipos
             const rpcResult = await supabase.rpc('get_all_companies');
             
             if (rpcResult.error) {
@@ -159,6 +161,7 @@ export function useCompany() {
           
           // Tentativa 2: Criar via RPC (alternativa se implementada)
           try {
+            // @ts-ignore - Ignoramos o erro de tipagem para o RPC que existe no banco mas não está na definição de tipos
             const rpcResult = await supabase.rpc('create_company', {
               company_name: newCompany.nome,
               company_cnpj: newCompany.cnpj || null

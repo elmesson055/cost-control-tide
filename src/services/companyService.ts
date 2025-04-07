@@ -8,10 +8,10 @@ export const companyService = {
     try {
       console.log('Fetching companies...');
       
-      // Fetch all companies directly
+      // Use a simpler query approach to avoid RLS issues
       const { data, error } = await supabase
         .from('empresas')
-        .select('id, nome, cnpj, criado_em, ativo')
+        .select('*')
         .order('nome');
       
       if (error) {
@@ -26,7 +26,7 @@ export const companyService = {
       console.error('Exception during companies fetch:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar empresas';
       toast.error(`Erro ao carregar empresas: ${errorMessage}`);
-      return [] as Company[];
+      return [];
     }
   },
 
@@ -37,14 +37,14 @@ export const companyService = {
       console.log('Fetching current company:', companyId);
       const { data, error } = await supabase
         .from('empresas')
-        .select('id, nome, cnpj, criado_em, ativo')
+        .select('*')
         .eq('id', companyId)
         .maybeSingle();
       
       if (error) {
         console.error('Error fetching current company:', error);
         toast.error(`Erro ao carregar dados da empresa: ${error.message}`);
-        throw error;
+        return null;
       }
       
       console.log('Current company loaded successfully:', data);
@@ -59,42 +59,28 @@ export const companyService = {
     try {
       console.log('Creating company:', newCompany);
       
-      // Using the create_company_secure RPC function with explicit TypeScript casting
-      const { data, error } = await supabase.rpc(
-        'create_company_secure' as any, 
-        {
-          company_name: newCompany.nome,
-          company_cnpj: newCompany.cnpj || null
-        }
-      );
-      
-      if (error) {
-        console.error('Error creating company with secure function:', error);
-        throw error;
-      }
-      
-      if (!data) {
-        throw new Error('Nenhum dado retornado ao criar empresa');
-      }
-      
-      // Fetch the newly created company to get all its data
-      const companyId = data;
-      const { data: companyData, error: fetchError } = await supabase
+      // Directly insert into empresas table without using RPC
+      const { data, error } = await supabase
         .from('empresas')
-        .select('id, nome, cnpj, criado_em, ativo')
-        .eq('id', companyId)
+        .insert({
+          nome: newCompany.nome,
+          cnpj: newCompany.cnpj || null
+        })
+        .select('*')
         .single();
       
-      if (fetchError) {
-        console.error('Error fetching created company:', fetchError);
-        throw fetchError;
+      if (error) {
+        console.error('Error creating company:', error);
+        toast.error(`Não foi possivel criar a empresa. ${error.message}`);
+        throw new Error(`Erro ao criar empresa: ${error.message}`);
       }
       
-      console.log('Company created successfully:', companyData);
-      return companyData as Company;
+      console.log('Company created successfully:', data);
+      return data as Company;
     } catch (err) {
       console.error('Exception during company creation:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      toast.error(`Erro ao criar empresa: ${errorMessage}`);
       throw new Error(`Erro ao criar empresa: ${errorMessage}`);
     }
   },
@@ -106,22 +92,21 @@ export const companyService = {
         .from('empresas')
         .update(data)
         .eq('id', id)
-        .select();
+        .select()
+        .single();
       
       if (error) {
         console.error('Error updating company:', error);
-        throw error;
+        toast.error(`Erro ao atualizar empresa: ${error.message}`);
+        throw new Error(`Erro ao atualizar empresa: ${error.message}`);
       }
       
-      if (!updatedData || updatedData.length === 0) {
-        throw new Error('Nenhum dado retornado ao atualizar empresa');
-      }
-      
-      console.log('Company updated successfully:', updatedData[0]);
-      return updatedData[0] as Company;
+      console.log('Company updated successfully:', updatedData);
+      return updatedData as Company;
     } catch (err) {
       console.error('Exception during company update:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      toast.error(`Erro ao atualizar empresa: ${errorMessage}`);
       throw new Error(`Erro ao atualizar empresa: ${errorMessage}`);
     }
   }

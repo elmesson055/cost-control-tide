@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { companyService } from "@/services/companyService";
@@ -20,6 +20,7 @@ export const useCompany = () => {
     data: companies = [],
     isLoading: isLoadingCompanies,
     error: companiesError,
+    refetch: refetchCompanies
   } = useQuery({
     queryKey: ["companies"],
     queryFn: companyService.getCompanies,
@@ -77,6 +78,11 @@ export const useCompany = () => {
     queryClient.invalidateQueries({ queryKey: ["currentCompany"] });
     toast.success("Empresa alterada com sucesso!");
   };
+
+  // Forçar uma busca inicial das empresas quando o componente for montado
+  useEffect(() => {
+    refetchCompanies();
+  }, [refetchCompanies]);
 
   return {
     companies,

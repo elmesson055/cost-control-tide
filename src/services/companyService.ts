@@ -6,23 +6,23 @@ import { toast } from 'sonner';
 export const companyService = {
   async getCompanies(): Promise<Company[]> {
     try {
-      console.log('Fetching companies from database...');
+      console.log('Buscando empresas do banco de dados...');
       
-      // Use a more basic query approach with error tracing
+      // Usando uma abordagem mais direta para evitar problemas de RLS
       const { data, error } = await supabase
         .from('empresas')
-        .select('*');
+        .select('id, nome, cnpj, criado_em, ativo');
       
       if (error) {
-        console.error('Error fetching companies:', error);
+        console.error('Erro ao buscar empresas:', error);
         toast.error('Não foi possível carregar as empresas. Erro: ' + error.message);
         return [];
       }
       
-      console.log('Companies loaded successfully:', data);
-      return data as Company[];
+      console.log('Empresas carregadas com sucesso:', data);
+      return data || [];
     } catch (err) {
-      console.error('Exception during companies fetch:', err);
+      console.error('Exceção durante a busca de empresas:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar empresas';
       toast.error(`Erro ao carregar empresas: ${errorMessage}`);
       return [];
@@ -33,32 +33,32 @@ export const companyService = {
     try {
       if (!companyId) return null;
       
-      console.log('Fetching current company:', companyId);
+      console.log('Buscando empresa atual:', companyId);
       const { data, error } = await supabase
         .from('empresas')
-        .select('*')
+        .select('id, nome, cnpj, criado_em, ativo')
         .eq('id', companyId)
         .maybeSingle();
       
       if (error) {
-        console.error('Error fetching current company:', error);
+        console.error('Erro ao buscar empresa atual:', error);
         toast.error(`Erro ao carregar dados da empresa: ${error.message}`);
         return null;
       }
       
-      console.log('Current company loaded successfully:', data);
-      return data as Company | null;
+      console.log('Empresa atual carregada com sucesso:', data);
+      return data;
     } catch (err) {
-      console.error('Exception during company fetch:', err);
+      console.error('Exceção durante a busca de empresa:', err);
       return null;
     }
   },
 
   async createCompany(newCompany: NewCompany): Promise<Company> {
     try {
-      console.log('Creating company:', newCompany);
+      console.log('Criando empresa:', newCompany);
       
-      // Basic insert operation
+      // Operação básica de inserção
       const { data, error } = await supabase
         .from('empresas')
         .insert({
@@ -69,15 +69,15 @@ export const companyService = {
         .single();
       
       if (error) {
-        console.error('Error creating company:', error);
-        toast.error(`Não foi possivel criar a empresa: ${error.message}`);
+        console.error('Erro ao criar empresa:', error);
+        toast.error(`Não foi possível criar a empresa: ${error.message}`);
         throw new Error(`Erro ao criar empresa: ${error.message}`);
       }
       
-      console.log('Company created successfully:', data);
+      console.log('Empresa criada com sucesso:', data);
       return data as Company;
     } catch (err) {
-      console.error('Exception during company creation:', err);
+      console.error('Exceção durante a criação da empresa:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       toast.error(`Erro ao criar empresa: ${errorMessage}`);
       throw new Error(`Erro ao criar empresa: ${errorMessage}`);

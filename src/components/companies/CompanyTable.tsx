@@ -1,5 +1,6 @@
+
 import { format } from "date-fns";
-import { Check, PencilIcon } from "lucide-react";
+import { Check, PencilIcon, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Company } from "@/types/company.types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CompanyTableProps {
   companies: Company[];
@@ -47,31 +49,34 @@ export const CompanyTable = ({
 
   return (
     <div className="border rounded-md">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>CNPJ</TableHead>
-            <TableHead>Data de Criação</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {companies.length === 0 ? (
+      {companies.length === 0 ? (
+        <div className="p-4">
+          <Alert variant="warning" className="bg-amber-50 border-amber-200">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              Nenhuma empresa encontrada. Verifique se a conexão com o banco de dados está correta.
+            </AlertDescription>
+          </Alert>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-8">
-                Nenhuma empresa encontrada
-              </TableCell>
+              <TableHead>Nome</TableHead>
+              <TableHead>CNPJ</TableHead>
+              <TableHead>Data de Criação</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
-          ) : (
-            companies.map((company) => (
+          </TableHeader>
+          <TableBody>
+            {companies.map((company) => (
               <TableRow key={company.id}>
                 <TableCell className="font-medium">{company.nome}</TableCell>
                 <TableCell>{company.cnpj || "N/A"}</TableCell>
                 <TableCell>{formatDate(company.criado_em)}</TableCell>
                 <TableCell>
-                  {company.ativo ? (
+                  {company.ativo !== false ? (
                     <Badge variant="outline" className="bg-green-100 text-green-800">
                       Ativa
                     </Badge>
@@ -107,10 +112,10 @@ export const CompanyTable = ({
                   </div>
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 };

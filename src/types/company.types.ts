@@ -2,12 +2,12 @@
 export interface Company {
   id: string;
   nome: string;
-  cnpj?: string;
-  criado_em?: string;
-  ativo?: boolean;
+  cnpj?: string | null;
+  criado_em?: string | null;
+  ativo?: boolean | null;
 }
 
 export interface NewCompany {
   nome: string;
-  cnpj?: string;
+  cnpj?: string | null;
 }

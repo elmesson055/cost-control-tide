@@ -6,17 +6,16 @@ import { toast } from 'sonner';
 export const companyService = {
   async getCompanies(): Promise<Company[]> {
     try {
-      console.log('Fetching companies...');
+      console.log('Fetching companies from database...');
       
-      // Use a simpler query approach to avoid RLS issues
+      // Use a more basic query approach with error tracing
       const { data, error } = await supabase
         .from('empresas')
-        .select('*')
-        .order('nome');
+        .select('*');
       
       if (error) {
         console.error('Error fetching companies:', error);
-        toast.error('Não foi possível carregar as empresas. Verifique as políticas de acesso no Supabase.');
+        toast.error('Não foi possível carregar as empresas. Erro: ' + error.message);
         return [];
       }
       
@@ -59,19 +58,19 @@ export const companyService = {
     try {
       console.log('Creating company:', newCompany);
       
-      // Directly insert into empresas table without using RPC
+      // Basic insert operation
       const { data, error } = await supabase
         .from('empresas')
         .insert({
           nome: newCompany.nome,
           cnpj: newCompany.cnpj || null
         })
-        .select('*')
+        .select()
         .single();
       
       if (error) {
         console.error('Error creating company:', error);
-        toast.error(`Não foi possivel criar a empresa. ${error.message}`);
+        toast.error(`Não foi possivel criar a empresa: ${error.message}`);
         throw new Error(`Erro ao criar empresa: ${error.message}`);
       }
       

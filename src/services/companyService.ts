@@ -8,18 +8,41 @@ export const companyService = {
     try {
       console.log('Buscando empresas do banco de dados...');
       
-      // Usando uma abordagem mais direta para evitar problemas de RLS
+      // Using a more direct approach with customized query to avoid RLS issues
       const { data, error } = await supabase
         .from('empresas')
-        .select('id, nome, cnpj, criado_em, ativo');
+        .select('id, nome, cnpj, criado_em, ativo')
+        .order('nome');
       
       if (error) {
         console.error('Erro ao buscar empresas:', error);
         toast.error('Não foi possível carregar as empresas. Erro: ' + error.message);
+        
+        // If we get an RLS error, try an alternative approach with RPC
+        if (error.message.includes('recursion') || error.code === '42P17') {
+          console.log('Tentando método alternativo para buscar empresas...');
+          
+          // Call custom RPC function if available, otherwise return empty array
+          try {
+            const { data: rpcData, error: rpcError } = await supabase.rpc('get_all_companies');
+            
+            if (rpcError) {
+              console.error('Erro no método alternativo:', rpcError);
+              return [];
+            }
+            
+            console.log('Empresas carregadas com método alternativo:', rpcData?.length || 0);
+            return rpcData || [];
+          } catch (rpcErr) {
+            console.error('Exceção no método alternativo:', rpcErr);
+            return [];
+          }
+        }
+        
         return [];
       }
       
-      console.log('Empresas carregadas com sucesso:', data);
+      console.log('Empresas carregadas com sucesso:', data?.length || 0);
       return data || [];
     } catch (err) {
       console.error('Exceção durante a busca de empresas:', err);

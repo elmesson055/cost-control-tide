@@ -51,7 +51,7 @@ export const CompanyTable = ({
     <div className="border rounded-md">
       {companies.length === 0 ? (
         <div className="p-4">
-          <Alert variant="warning" className="bg-amber-50 border-amber-200">
+          <Alert variant="default" className="bg-amber-50 border-amber-200">
             <AlertCircle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800">
               Nenhuma empresa encontrada. Verifique se a conexão com o banco de dados está correta.

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { companyService } from "@/services/companyService";
@@ -15,7 +15,7 @@ export const useCompany = () => {
 
   const queryClient = useQueryClient();
 
-  // Fetch all companies
+  // Fetch all companies with retry mechanism
   const {
     data: companies = [],
     isLoading: isLoadingCompanies,
@@ -25,6 +25,8 @@ export const useCompany = () => {
     queryKey: ["companies"],
     queryFn: companyService.getCompanies,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3, // Retry 3 times if it fails
+    retryDelay: attempt => Math.min(1000 * 2 ** attempt, 30000), // Exponential backoff
   });
 
   // Fetch current company details
@@ -71,18 +73,27 @@ export const useCompany = () => {
   });
 
   // Switch company function
-  const switchCompany = (companyId: string) => {
+  const switchCompany = useCallback((companyId: string) => {
     console.log("Switching to company:", companyId);
     setCurrentCompanyId(companyId);
     localStorage.setItem("currentCompanyId", companyId);
     queryClient.invalidateQueries({ queryKey: ["currentCompany"] });
     toast.success("Empresa alterada com sucesso!");
-  };
+  }, [queryClient]);
 
-  // Forçar uma busca inicial das empresas quando o componente for montado
+  // Initial companies fetch with delay for UI responsiveness
   useEffect(() => {
-    refetchCompanies();
+    const timer = setTimeout(() => {
+      refetchCompanies();
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, [refetchCompanies]);
+
+  // Simplified debug hook to log company loading progress
+  useEffect(() => {
+    console.log(`Companies loaded: ${companies.length}, Loading: ${isLoadingCompanies}, Error: ${companiesError ? 'Yes' : 'No'}`);
+  }, [companies.length, isLoadingCompanies, companiesError]);
 
   return {
     companies,

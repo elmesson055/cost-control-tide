@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Company, NewCompany } from '@/types/company.types';
 import { toast } from 'sonner';
@@ -7,54 +8,20 @@ export const companyService = {
     try {
       console.log('Fetching companies...');
       
-      // Tentativa direta primeiro (pode falhar devido ao RLS)
-      let companyData: Company[] = [];
+      // Fetch all companies directly
+      const { data, error } = await supabase
+        .from('empresas')
+        .select('id, nome, cnpj, criado_em, ativo')
+        .order('nome');
       
-      try {
-        // Usando um método direto para buscar empresas
-        const directResult = await supabase
-          .from('empresas')
-          .select('id, nome, cnpj, criado_em, ativo')
-          .order('nome');
-        
-        if (directResult.error) {
-          console.error('Error in direct query:', directResult.error);
-          throw directResult.error;
-        }
-        
-        companyData = directResult.data as Company[];
-        console.log('Companies loaded via direct query:', companyData);
-      } catch (queryError) {
-        console.error('Error in primary query method:', queryError);
-        
-        // Tentativa com RPC como fallback (se implementado no backend)
-        try {
-          // @ts-ignore - Ignoramos o erro de tipagem para o RPC que existe no banco mas não está na definição de tipos
-          const rpcResult = await supabase.rpc('get_all_companies');
-          
-          if (rpcResult.error) {
-            console.error('Error in RPC fallback:', rpcResult.error);
-            throw rpcResult.error;
-          }
-          
-          // Garantimos que o resultado é um array
-          if (Array.isArray(rpcResult.data)) {
-            companyData = rpcResult.data as Company[];
-          } else {
-            console.error('RPC result is not an array:', rpcResult.data);
-            throw new Error('Formato de dados inesperado do RPC');
-          }
-          console.log('Companies loaded via RPC fallback:', companyData);
-        } catch (rpcError) {
-          // Se ambos falharem, log e retornar array vazio
-          console.error('All company fetch methods failed:', rpcError);
-          toast.error('Não foi possível carregar as empresas. Verifique as políticas de acesso no Supabase.');
-          return [];
-        }
+      if (error) {
+        console.error('Error fetching companies:', error);
+        toast.error('Não foi possível carregar as empresas. Verifique as políticas de acesso no Supabase.');
+        return [];
       }
       
-      console.log('Companies loaded successfully:', companyData);
-      return companyData;
+      console.log('Companies loaded successfully:', data);
+      return data as Company[];
     } catch (err) {
       console.error('Exception during companies fetch:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar empresas';
@@ -92,11 +59,14 @@ export const companyService = {
     try {
       console.log('Creating company:', newCompany);
       
-      // Utilizando a função segura create_company_secure
-      const { data, error } = await supabase.rpc('create_company_secure', {
-        company_name: newCompany.nome,
-        company_cnpj: newCompany.cnpj || null
-      });
+      // Using the create_company_secure RPC function with explicit TypeScript casting
+      const { data, error } = await supabase.rpc(
+        'create_company_secure' as any, 
+        {
+          company_name: newCompany.nome,
+          company_cnpj: newCompany.cnpj || null
+        }
+      );
       
       if (error) {
         console.error('Error creating company with secure function:', error);
@@ -107,7 +77,7 @@ export const companyService = {
         throw new Error('Nenhum dado retornado ao criar empresa');
       }
       
-      // Buscamos a empresa recém-criada para obter todos os seus dados
+      // Fetch the newly created company to get all its data
       const companyId = data;
       const { data: companyData, error: fetchError } = await supabase
         .from('empresas')

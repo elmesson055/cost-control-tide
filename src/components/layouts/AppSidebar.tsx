@@ -7,12 +7,16 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton
+  SidebarMenuButton,
+  SidebarFooter
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Receipt, Wallet, DollarSign, Package, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, Receipt, Wallet, DollarSign, Package, Users, Settings, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 const AppSidebar = () => {
   const location = useLocation();
+  const { logout } = useAuth();
   
   const navItems = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -23,6 +27,10 @@ const AppSidebar = () => {
     { name: 'Fornecedores', path: '/suppliers', icon: <Users className="h-5 w-5" /> },
     { name: 'Configurações', path: '/settings', icon: <Settings className="h-5 w-5" /> },
   ];
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   return (
     <Sidebar>
@@ -47,6 +55,16 @@ const AppSidebar = () => {
           ))}
         </SidebarMenu>
       </SidebarContent>
+      <SidebarFooter className="p-4">
+        <Button 
+          variant="outline" 
+          className="w-full flex items-center justify-center gap-2"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Sair</span>
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   );
 };

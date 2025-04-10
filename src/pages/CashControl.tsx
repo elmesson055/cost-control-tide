@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { generateCashHistory, formatDateTime } from "@/utils/mockData";
 import { toast } from "sonner";
+import { useCashControl } from '@/hooks/useCashControl';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const CashControl = () => {
   const [cashState, setCashState] = useState({

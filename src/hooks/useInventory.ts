@@ -79,18 +79,23 @@ export function useInventory() {
   // Add new inventory item
   const addInventoryItem = useMutation({
     mutationFn: async (newItem: NewInventoryItem) => {
-      // If fornecedor_id is "none", set it to null
       if (newItem.fornecedor_id === "none") {
         newItem.fornecedor_id = null;
       }
 
       const { data, error } = await supabase
         .from('estoque')
-        .insert([newItem])
-        .select();
+        .insert(newItem)
+        .select()
+        .single();
 
       if (error) {
-        console.error('Error adding inventory item:', error);
+        console.error('Supabase insert error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
 
@@ -103,7 +108,7 @@ export function useInventory() {
     onError: (error) => {
       toast.error(`Erro ao adicionar item: ${error.message}`);
     }
-  });
+});
 
   return {
     inventoryItems,

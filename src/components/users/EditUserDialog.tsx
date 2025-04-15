@@ -1,15 +1,8 @@
-
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useCompany } from "@/hooks/useCompany";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -17,9 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, userService } from "@/services/userService";
-import { useCompany } from "@/hooks/useCompany";
 
 interface EditUserDialogProps {
   open: boolean;
@@ -27,65 +20,154 @@ interface EditUserDialogProps {
   selectedUser: User | null;
 }
 
+const CustomDialog = ({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  footer,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) => {
+  return (
+    <div className={`fixed inset-0 z-50 ${open ? "" : "hidden"}`}>
+      <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
+      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-lg font-bold">{title}</h2>
+        <p className="text-sm text-gray-500 mt-2">{description}</p>
+        <div className="mt-4">{children}</div>
+        {footer && <div className="mt-6 flex justify-end">{footer}</div>}
+      </div>
+    </div>
+  );
+};
+
 export const EditUserDialog = ({ open, onOpenChange, selectedUser }: EditUserDialogProps) => {
   const queryClient = useQueryClient();
-  const { currentCompanyId } = useCompany();
+  const { companies } = useCompany();
+  const [editingUser, setEditingUser] = useState<Partial<User> | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
-  const updateRoleMutation = useMutation({
-    mutationFn: ({ userId, role }: { userId: string; role: string }) => 
-      userService.updateUserRole(userId, role),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users", currentCompanyId] });
-      toast.success("Função de usuário atualizada com sucesso!");
+  useEffect(() => {
+    if (selectedUser) {
+      setEditingUser({
+        full_name: selectedUser.full_name,
+        email: selectedUser.email,
+        role: selectedUser.role,
+        empresa_id: selectedUser.empresa_id,
+      });
+    } else {
+      setEditingUser(null);
+    }
+  }, [selectedUser]);
+
+  const updateUserMutation = useMutation({
+    mutationFn: (updatedUser: User) => userService.updateUser(updatedUser),
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success("Usuário atualizado com sucesso!");
       onOpenChange(false);
     },
     onError: (error) => {
-      console.error("Error updating user role:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error(`Erro ao atualizar função: ${errorMessage}`);
+      console.error("Error updating user:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Erro desconhecido";
+      toast.error(`Erro ao atualizar usuário: ${errorMessage}`);
     },
   });
 
-  const handleUpdateRole = (e: React.FormEvent) => {
+  const handleUpdateUser = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedUser) {
-      updateRoleMutation.mutate({
-        userId: selectedUser.id,
-        role: selectedUser.role,
-      });
+    if (editingUser && selectedUser) {
+      setShowConfirmation(true);
     }
   };
 
-  // Fixed function to properly update the role
-  const handleRoleChange = (value: string) => {
-    if (selectedUser) {
-      // Create a new user object with the updated role
-      const updatedUser = { ...selectedUser, role: value };
-      // Call the onOpenChange function to update the parent component's state
-      // Instead of calling onOpenChange directly, we create a temporary state variable
-      const tempSelectedUser = updatedUser;
-      // Use the callback function to update the selectedUser in the parent component
-      selectedUser.role = value;
+  const handleConfirmUpdate = () => {
+    if (editingUser && selectedUser) {
+      updateUserMutation.mutate({ id: selectedUser.id, ...editingUser } as User);
+      setShowConfirmation(false);
+      onOpenChange(false); // Close the dialog after confirmation
     }
+  };
+
+  const handleCancelUpdate = () => {
+    setShowConfirmation(false);
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setEditingUser((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Editar Função</DialogTitle>
-          <DialogDescription>
-            Altere a função do usuário {selectedUser?.full_name}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleUpdateRole} className="space-y-4">
+    <CustomDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={showConfirmation ? "Confirmar Alterações" : "Editar Usuário"}
+      description={
+        showConfirmation
+          ? "Tem certeza que deseja salvar as alterações?"
+          : `Altere os dados do usuário ${editingUser?.full_name}`
+      }
+      footer={
+        showConfirmation ? (
+          <>
+            <Button variant="outline" onClick={handleCancelUpdate}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmUpdate}>Confirmar</Button>
+          </>
+        ) : undefined
+      }
+    >
+      {!showConfirmation && (
+        <form onSubmit={handleUpdateUser} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-role">Função</Label>
+            <Label htmlFor="full_name">Nome Completo</Label>
+            <Input
+              id="full_name"
+              name="full_name"
+              value={editingUser?.full_name || ""}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={editingUser?.email || ""}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className="space-y-2">
+            {/* Assuming you want to keep password change separate */}
+            <Label htmlFor="password">Nova Senha</Label>
+            <Input
+              id="password"
+              type="password"
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="role">Função</Label>
             <Select
-              value={selectedUser?.role || ""}
-              onValueChange={handleRoleChange}
+              onValueChange={(value) => {
+                handleInputChange({ target: { name: "role", value } } as any);
+              }
+              }
             >
-              <SelectTrigger id="edit-role">
+              <SelectTrigger id="role">
                 <SelectValue placeholder="Selecione uma função" />
               </SelectTrigger>
               <SelectContent>
@@ -96,13 +178,32 @@ export const EditUserDialog = ({ open, onOpenChange, selectedUser }: EditUserDia
               </SelectContent>
             </Select>
           </div>
-          <DialogFooter>
-            <Button type="submit" disabled={updateRoleMutation.isPending}>
-              {updateRoleMutation.isPending ? "Salvando..." : "Salvar Mudanças"}
-            </Button>
-          </DialogFooter>
+          <div className="space-y-2">
+            <Label htmlFor="empresa">Empresa</Label>
+            <Select
+              onValueChange={(value) => {
+                handleInputChange({ target: { name: "empresa_id", value } } as any);
+              }
+              }
+            >
+              <SelectTrigger id="empresa">
+                <SelectValue placeholder="Selecione uma empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                {companies &&
+                  companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.nome}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button type="submit" disabled={updateUserMutation.isPending}>
+            {updateUserMutation.isPending ? "Salvando..." : "Salvar Mudanças"}
+          </Button>
         </form>
-      </DialogContent>
-    </Dialog>
+      )}
+    </CustomDialog>
   );
 };

@@ -21,31 +21,27 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { NewUser, userService } from "@/services/userService";
+import { useCompany } from "@/hooks/useCompany";
 
 interface AddUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentCompanyId: string | null;
 }
 
-export const AddUserDialog = ({ open, onOpenChange, currentCompanyId }: AddUserDialogProps) => {
+export const AddUserDialog = ({ open, onOpenChange }: AddUserDialogProps) => {
   const queryClient = useQueryClient();
+  const { companies } = useCompany();
+
   const [newUser, setNewUser] = useState<NewUser>({
-    email: "",
+      email: "",
     full_name: "",
     password: "",
-    role: "user",
-    empresa_id: currentCompanyId || undefined
+    role: "user"
   });
 
-  // Atualizar empresa_id no newUser quando currentCompanyId mudar
-  useEffect(() => {
-    if (currentCompanyId) {
-      setNewUser(prev => ({ ...prev, empresa_id: currentCompanyId }));
-    }
-  }, [currentCompanyId]);
 
   const createUserMutation = useMutation({
+  
     mutationFn: userService.createUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", currentCompanyId] });
@@ -71,7 +67,7 @@ export const AddUserDialog = ({ open, onOpenChange, currentCompanyId }: AddUserD
       full_name: "",
       password: "",
       role: "user",
-      empresa_id: currentCompanyId || undefined
+      empresa_id: undefined
     });
   };
 
@@ -135,6 +131,29 @@ export const AddUserDialog = ({ open, onOpenChange, currentCompanyId }: AddUserD
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="empresa">Empresa</Label>
+              <Select
+                value={newUser.empresa_id}
+                onValueChange={(value) => setNewUser({ ...newUser, empresa_id: value })}
+              >
+                <SelectTrigger id="empresa">
+                  <SelectValue placeholder="Selecione uma empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companies && companies.length > 0 ? (
+                    companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.nome}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem disabled value="">Nenhuma empresa disponível</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
           </div>
           <DialogFooter>
             <Button type="submit" disabled={createUserMutation.isPending}>

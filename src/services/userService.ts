@@ -2,6 +2,7 @@
 import { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from 'uuid';
 
 export interface User {
   id: string;
@@ -88,12 +89,13 @@ export const userService = {
       if (!userData.empresa_id) {
         return wrapResult(null, new Error("ID da empresa é obrigatório para criar um usuário"));
       }
-      
-      // Here we would normally have a sign-up flow
-      // For demo purposes, we're just adding to the users table
+
+      // Generate a UUID for the new user
+      const id = uuidv4();
+
       const { data, error } = await supabase
         .from("users")
-        .insert([userData])
+        .insert([{ ...userData, id }]) // Include the generated ID
         .select();
         
       if (error) throw error;
@@ -106,17 +108,16 @@ export const userService = {
     }
   },
 
-  async updateUser(id: string, userData: Partial<User>): Promise<UserServiceResult> {
+  async updateUser({ id, ...userData }: { id: string; } & Partial<User>): Promise<UserServiceResult> {
     try {
       const { data, error } = await supabase
-        .from("users")
+        .from("users")        
         .update(userData)
         .eq("id", id)
         .select();
         
       if (error) throw error;
       
-      toast.success("Usuário atualizado com sucesso!");
       return wrapResult(data?.[0] || null);
     } catch (error) {
       toast.error(`Erro ao atualizar usuário: ${(error as Error).message}`);

@@ -28,6 +28,8 @@ export const UserManagement = () => {
     }
   }, [currentCompanyId, companies, switchCompany]);
 
+  console.log(`Fetching users for company ID: ${currentCompanyId}`);
+
   const { data: users = [], isLoading, isError, error } = useQuery({
     queryKey: ["users", currentCompanyId],
     queryFn: () => userService.getUsers(currentCompanyId),
